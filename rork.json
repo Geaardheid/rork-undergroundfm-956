@@ -1,0 +1,10 @@
+{
+  "$schema": "https://rork.com/schema/rork.json",
+  "apps": [
+    {
+      "name": "UndergroundFM",
+      "path": "ios",
+      "framework": "swift"
+    }
+  ]
+}
