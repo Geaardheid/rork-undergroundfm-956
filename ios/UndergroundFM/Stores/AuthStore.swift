@@ -9,6 +9,7 @@ import Foundation
 final class AuthStore {
     var currentUser: AppUser?
     var artistName: String?
+    var artistId: String?
     var isLoading: Bool = false
     var errorMessage: String?
 
@@ -20,6 +21,9 @@ final class AuthStore {
         do {
             let user = try await AuthService.shared.signIn(email: email, password: password)
             self.currentUser = user
+            if user.role == .artist {
+                await self.loadArtistId()
+            }
         } catch {
             self.errorMessage = error.localizedDescription
         }
@@ -55,6 +59,7 @@ final class AuthStore {
                 language: L10n.shared.language
             )
             self.currentUser = user
+            await self.loadArtistId()
         } catch {
             self.errorMessage = error.localizedDescription
         }
@@ -65,7 +70,19 @@ final class AuthStore {
         await AuthService.shared.signOut()
         self.currentUser = nil
         self.artistName = nil
+        self.artistId = nil
         self.errorMessage = nil
+    }
+
+    /// Look up the artist ID for the current user and cache it.
+    private func loadArtistId() async {
+        guard let user = currentUser,
+              let token = SessionStore.shared.session?.accessToken,
+              user.role == .artist else { return }
+        self.artistId = try? await ArtistService.shared.fetchArtistId(
+            userId: user.id,
+            accessToken: token
+        )
     }
 
     /// Promote current user to artist by creating an artists row + updating users.role.
@@ -90,6 +107,10 @@ final class AuthStore {
             updated.role = .artist
             self.currentUser = updated
             self.artistName = savedName
+            self.artistId = try? await ArtistService.shared.fetchArtistId(
+                userId: user.id,
+                accessToken: token
+            )
             isLoading = false
             return true
         } catch {

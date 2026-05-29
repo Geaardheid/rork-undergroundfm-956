@@ -50,7 +50,7 @@ struct MainTabView: View {
                 switch selected {
                 case .home:     HomeFeedView(l10n: l10n)
                 case .discover: ComingSoonView(l10n: l10n, titleKey: "tab.discover", icon: "sparkles")
-                case .upload:   ComingSoonView(l10n: l10n, titleKey: "tab.upload",   icon: "plus.circle.fill")
+                case .upload:   UploadTrackView(l10n: l10n)
                 case .library:  ComingSoonView(l10n: l10n, titleKey: "tab.library",  icon: "music.note.list")
                 case .profile:  ProfileView(l10n: l10n)
                 }

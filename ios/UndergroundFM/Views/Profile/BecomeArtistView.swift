@@ -7,11 +7,6 @@
 
 import SwiftUI
 
-struct BecomeArtistGenre: Identifiable, Hashable {
-    let id: String
-    let label: String
-}
-
 struct BecomeArtistView: View {
     @Environment(AuthStore.self) private var auth
     @Environment(\.dismiss) private var dismiss
@@ -25,7 +20,7 @@ struct BecomeArtistView: View {
 
     private let bioLimit: Int = 500
 
-    private var allGenres: [BecomeArtistGenre] {
+    private var allGenres: [GenreChip] {
         [
             .init(id: "rap",   label: "Rap"),
             .init(id: "trap",  label: "Trap"),
@@ -201,39 +196,6 @@ struct BecomeArtistView: View {
         )
         if ok {
             showSuccess = true
-        }
-    }
-}
-
-// MARK: - Flow chip layout
-
-private struct FlowChips: View {
-    let items: [BecomeArtistGenre]
-    let isSelected: (BecomeArtistGenre) -> Bool
-    let onTap: (BecomeArtistGenre) -> Void
-
-    var body: some View {
-        let columns = [GridItem(.adaptive(minimum: 90), spacing: AppSpacing.sm)]
-        LazyVGrid(columns: columns, alignment: .leading, spacing: AppSpacing.sm) {
-            ForEach(items) { item in
-                let selected = isSelected(item)
-                Button {
-                    onTap(item)
-                } label: {
-                    Text(item.label)
-                        .font(.system(size: AppFontSize.sm, weight: .bold))
-                        .foregroundStyle(selected ? AppColors.yellowText : AppColors.textPrimary)
-                        .padding(.horizontal, AppSpacing.md)
-                        .padding(.vertical, 10)
-                        .frame(maxWidth: .infinity)
-                        .background(selected ? AppColors.yellow : AppColors.card)
-                        .overlay(
-                            Capsule().stroke(selected ? AppColors.yellow : AppColors.border, lineWidth: 1)
-                        )
-                        .clipShape(Capsule())
-                }
-                .buttonStyle(PressableScaleStyle())
-            }
         }
     }
 }

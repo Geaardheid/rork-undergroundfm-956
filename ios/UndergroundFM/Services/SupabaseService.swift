@@ -204,21 +204,79 @@ nonisolated final class SupabaseService: @unchecked Sendable {
         try Self.assertOK(resp, data: data)
     }
 
+    // MARK: - Storage
+
+    /// Upload raw data naar een Supabase Storage bucket.
+    /// Retourneert de public URL van de geüploade file.
+    func uploadToStorage(
+        bucket: String,
+        path: String,
+        data: Data,
+        contentType: String,
+        accessToken: String,
+        onProgress: ((Double) -> Void)? = nil
+    ) async throws -> String {
+        guard isConfigured else { throw SupabaseError.missingConfig }
+        let endpoint = URL(string: "\(url)/storage/v1/object/\(bucket)/\(path)")!
+        var req = URLRequest(url: endpoint)
+        req.httpMethod = "POST"
+        req.setValue(anonKey, forHTTPHeaderField: "apikey")
+        req.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        req.setValue(contentType, forHTTPHeaderField: "Content-Type")
+        req.setValue("*/*", forHTTPHeaderField: "Accept")
+        req.httpBody = data
+
+        if let onProgress = onProgress {
+            let delegate = UploadProgressDelegate(onProgress: onProgress)
+            let progressSession = URLSession(configuration: .default, delegate: delegate, delegateQueue: nil)
+            let (responseData, resp) = try await progressSession.data(for: req)
+            try Self.assertOK(resp, data: responseData)
+        } else {
+            let (responseData, resp) = try await session.data(for: req)
+            try Self.assertOK(resp, data: responseData)
+        }
+
+        let publicPath = path.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? path
+        return "\(url)/storage/v1/object/public/\(bucket)/\(publicPath)"
+    }
+
     // MARK: - Helpers
 
-    private static func assertOK(_ resp: URLResponse, data: Data) throws {
+    static func publicStorageURL(bucket: String, path: String) -> String? {
+        let publicPath = path.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? path
+        return "\(SupabaseConfig.url)/storage/v1/object/public/\(bucket)/\(publicPath)"
+    }
+
+    static func assertOK(_ resp: URLResponse, data: Data) throws {
         guard let http = resp as? HTTPURLResponse else {
             throw SupabaseError.invalidResponse
         }
         guard (200..<300).contains(http.statusCode) else {
             let msg = String(data: data, encoding: .utf8) ?? "HTTP \(http.statusCode)"
-            // Try parse Supabase error JSON
             if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
                 if let m = (json["msg"] as? String) ?? (json["message"] as? String) ?? (json["error_description"] as? String) {
                     throw SupabaseError.message(m)
                 }
             }
             throw SupabaseError.http(http.statusCode, msg)
+        }
+    }
+}
+
+// MARK: - Upload Progress Delegate
+
+private final class UploadProgressDelegate: NSObject, URLSessionTaskDelegate {
+    let onProgress: (Double) -> Void
+
+    init(onProgress: @escaping (Double) -> Void) {
+        self.onProgress = onProgress
+    }
+
+    func urlSession(_ session: URLSession, task: URLSessionTask, didSendBodyData bytesSent: Int64, totalBytesSent: Int64, totalBytesExpectedToSend: Int64) {
+        guard totalBytesExpectedToSend > 0 else { return }
+        let fraction = Double(totalBytesSent) / Double(totalBytesExpectedToSend)
+        Task { @MainActor in
+            self.onProgress(fraction)
         }
     }
 }

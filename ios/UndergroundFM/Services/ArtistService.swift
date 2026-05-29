@@ -10,10 +10,12 @@ import Foundation
 nonisolated struct ArtistRow: Decodable {
     let id: String
     let artistName: String?
+    let userId: String?
 
     enum CodingKeys: String, CodingKey {
         case id
         case artistName = "artist_name"
+        case userId = "user_id"
     }
 }
 
@@ -23,6 +25,17 @@ final class ArtistService {
     private let sb = SupabaseService.shared
 
     private init() {}
+
+    /// Zoek het artist_id op voor een gegeven user_id. Retourneert nil als niet gevonden.
+    func fetchArtistId(userId: String, accessToken: String) async throws -> String? {
+        let rows: [ArtistRow] = try await sb.select(
+            ArtistRow.self,
+            from: "artists",
+            query: ["user_id": "eq.\(userId)", "select": "id", "limit": "1"],
+            accessToken: accessToken
+        )
+        return rows.first?.id
+    }
 
     /// Maakt een artists-row aan voor de huidige user, update users.role naar 'artist'.
     /// Retourneert de aangemaakte artist name.
