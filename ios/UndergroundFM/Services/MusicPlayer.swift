@@ -56,6 +56,10 @@ final class MusicPlayer {
 
         observe(playerItem: item)
         play()
+
+        if let uid = SessionStore.shared.session?.userId {
+            ViewTracker.shared.startSession(track: track, userId: uid)
+        }
     }
 
     // MARK: - Playback controls
@@ -66,6 +70,7 @@ final class MusicPlayer {
     }
 
     func pause() {
+        ViewTracker.shared.endSession()
         player?.pause()
         isPlaying = false
     }
@@ -89,6 +94,7 @@ final class MusicPlayer {
     }
 
     func clear() {
+        ViewTracker.shared.endSession()
         removeObservers()
         player?.pause()
         player?.replaceCurrentItem(with: nil)
@@ -109,7 +115,9 @@ final class MusicPlayer {
             forInterval: interval,
             queue: .main
         ) { [weak self] time in
-            self?.currentTime = time.seconds
+            guard let self else { return }
+            self.currentTime = time.seconds
+            ViewTracker.shared.tick(currentTime: time.seconds, duration: self.duration)
         }
 
         statusObserver = playerItem.observe(\.status, options: [.new]) { [weak self] item, _ in
@@ -129,8 +137,10 @@ final class MusicPlayer {
             object: playerItem,
             queue: .main
         ) { [weak self] _ in
-            self?.isPlaying = false
-            self?.currentTime = 0
+            guard let self else { return }
+            ViewTracker.shared.endSession()
+            self.isPlaying = false
+            self.currentTime = 0
         }
     }
 
