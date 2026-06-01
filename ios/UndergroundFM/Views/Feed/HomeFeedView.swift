@@ -22,7 +22,11 @@ struct HomeFeedView: View {
                         track: feed.featured,
                         isLoading: feed.isFeaturedLoading,
                         l10n: l10n,
-                        onTap: {}
+                        onTap: {
+                            if let track = feed.featured {
+                                MusicPlayer.shared.load(track: track)
+                            }
+                        }
                     )
 
                     ForEach(GenreSection.all) { section in
@@ -30,7 +34,9 @@ struct HomeFeedView: View {
                             section: section,
                             state: feed.state(for: section.id),
                             l10n: l10n,
-                            onSelectTrack: { _ in },
+                            onSelectTrack: { track in
+                                MusicPlayer.shared.load(track: track)
+                            },
                             onRetry: { Task { await feed.load(section: section) } }
                         )
                     }

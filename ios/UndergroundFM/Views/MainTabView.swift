@@ -3,6 +3,7 @@
 //  UndergroundFM
 //
 //  Custom liquid-glass tab bar (5 tabs, upload alleen voor artiesten).
+//  Includes persistent mini player above the tab bar.
 //
 
 import SwiftUI
@@ -36,6 +37,7 @@ struct MainTabView: View {
     @Environment(AuthStore.self) private var auth
     @Bindable var l10n: L10n
     @State private var selected: AppTab = .home
+    @State private var showFullPlayer: Bool = false
 
     private var visibleTabs: [AppTab] {
         let isArtist = auth.currentUser?.role == .artist
@@ -55,6 +57,26 @@ struct MainTabView: View {
                 case .profile:  ProfileView(l10n: l10n)
                 }
             }
+            .safeAreaInset(edge: .bottom) {
+                bottomArea
+            }
+        }
+        .sheet(isPresented: $showFullPlayer) {
+            PlayerView()
+                .presentationDetents([.large])
+                .presentationBackground(AppColors.bg)
+        }
+    }
+
+    // MARK: - Bottom area (mini player + tab bar)
+
+    private var bottomArea: some View {
+        VStack(spacing: 0) {
+            MiniPlayerView(
+                player: MusicPlayer.shared,
+                showFullPlayer: $showFullPlayer
+            )
+            .animation(.spring(response: 0.35, dampingFraction: 0.8), value: MusicPlayer.shared.hasTrack)
 
             tabBar
         }

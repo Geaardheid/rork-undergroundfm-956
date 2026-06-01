@@ -154,6 +154,8 @@ final class L10n {
         "upload.uploadButton": "Track uploaden",
         "upload.successTitle": "Track geüpload!",
         "upload.successMessage": "Je track staat live op UndergroundFM.",
+
+        "player.noTrack": "Geen nummer geselecteerd",
     ]
 
     // MARK: - EN
@@ -246,6 +248,8 @@ final class L10n {
         "upload.uploadButton": "Upload track",
         "upload.successTitle": "Track uploaded!",
         "upload.successMessage": "Your track is live on UndergroundFM.",
+
+        "player.noTrack": "No track selected",
     ]
 
     // MARK: - ES
@@ -338,5 +342,7 @@ final class L10n {
         "upload.uploadButton": "Subir track",
         "upload.successTitle": "¡Track subido!",
         "upload.successMessage": "Tu track está en vivo en UndergroundFM.",
+
+        "player.noTrack": "Ninguna pista seleccionada",
     ]
 }
