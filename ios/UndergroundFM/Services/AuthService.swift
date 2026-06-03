@@ -40,7 +40,7 @@ final class AuthService {
     func signUpArtist(email: String, password: String, displayName: String, inviteCode: String, language: AppLanguage) async throws -> AppUser {
         // Stap 1: valideer code (zonder sessie — invite_codes_verify policy laat anon select toe)
         let code = inviteCode.uppercased().trimmingCharacters(in: .whitespaces)
-        let isFounding = code.uppercased().hasPrefix("FOUND")
+        let isFounding = code.hasPrefix("FOUNDING") || code.hasPrefix("FA")
         let codes: [InviteCodeRow] = try await sb.select(
             InviteCodeRow.self,
             from: "invite_codes",
