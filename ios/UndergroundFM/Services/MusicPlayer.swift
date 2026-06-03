@@ -28,6 +28,7 @@ final class MusicPlayer {
     private init() {
         configureAudioSession()
         setupRemoteCommands()
+        setupInterruptionObserver()
     }
 
     /// Configure the shared audio session for background playback.
@@ -41,6 +42,41 @@ final class MusicPlayer {
             try AVAudioSession.sharedInstance().setActive(true)
         } catch {
             print("Audio session error: \(error)")
+        }
+    }
+
+    /// Handle audio session interruptions (calls, Siri, other apps).
+    /// On `.began` we pause; on `.ended` we resume only when the system
+    /// flags `shouldResume`. This is the only place playback reacts to
+    /// app/system lifecycle — nothing pauses on foreground/`.active`.
+    private func setupInterruptionObserver() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleInterruption(_:)),
+            name: AVAudioSession.interruptionNotification,
+            object: AVAudioSession.sharedInstance()
+        )
+    }
+
+    @objc private func handleInterruption(_ notification: Notification) {
+        guard let info = notification.userInfo,
+              let rawType = info[AVAudioSessionInterruptionTypeKey] as? UInt,
+              let type = AVAudioSession.InterruptionType(rawValue: rawType) else {
+            return
+        }
+
+        switch type {
+        case .began:
+            if isPlaying { pause() }
+        case .ended:
+            guard let rawOptions = info[AVAudioSessionInterruptionOptionKey] as? UInt else { return }
+            let options = AVAudioSession.InterruptionOptions(rawValue: rawOptions)
+            if options.contains(.shouldResume) {
+                try? AVAudioSession.sharedInstance().setActive(true)
+                play()
+            }
+        @unknown default:
+            break
         }
     }
 
@@ -188,24 +224,42 @@ final class MusicPlayer {
     private func setupRemoteCommands() {
         let center = MPRemoteCommandCenter.shared()
 
+        center.playCommand.isEnabled = true
         center.playCommand.addTarget { [weak self] _ in
-            guard let self, !self.isPlaying else { return .commandFailed }
-            self.play()
+            guard let self else { return .commandFailed }
+            if !self.isPlaying { self.play() }
             return .success
         }
 
+        center.pauseCommand.isEnabled = true
         center.pauseCommand.addTarget { [weak self] _ in
-            guard let self, self.isPlaying else { return .commandFailed }
-            self.pause()
+            guard let self else { return .commandFailed }
+            if self.isPlaying { self.pause() }
             return .success
         }
 
+        center.togglePlayPauseCommand.isEnabled = true
         center.togglePlayPauseCommand.addTarget { [weak self] _ in
             guard let self else { return .commandFailed }
             self.togglePlayPause()
             return .success
         }
 
+        center.nextTrackCommand.isEnabled = true
+        center.nextTrackCommand.addTarget { [weak self] _ in
+            guard let self, self.currentTrack != nil else { return .commandFailed }
+            self.skipForward()
+            return .success
+        }
+
+        center.previousTrackCommand.isEnabled = true
+        center.previousTrackCommand.addTarget { [weak self] _ in
+            guard let self, self.currentTrack != nil else { return .commandFailed }
+            self.skipBackward()
+            return .success
+        }
+
+        center.changePlaybackPositionCommand.isEnabled = true
         center.changePlaybackPositionCommand.addTarget { [weak self] event in
             guard let self,
                   let event = event as? MPChangePlaybackPositionCommandEvent else {
