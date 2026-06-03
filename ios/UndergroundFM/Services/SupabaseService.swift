@@ -226,7 +226,44 @@ nonisolated final class SupabaseService: @unchecked Sendable {
         try Self.assertOK(resp, data: data)
     }
 
+    /// Delete rows matching query
+    func delete(
+        table: String,
+        query: [String: String],
+        accessToken: String?
+    ) async throws {
+        let req = try restRequest(
+            path: table,
+            method: "DELETE",
+            accessToken: accessToken,
+            query: query
+        )
+        let (data, resp) = try await session.data(for: req)
+        try Self.assertOK(resp, data: data)
+    }
+
     // MARK: - Storage
+
+    /// Verwijder een object uit een Supabase Storage bucket.
+    func deleteFromStorage(bucket: String, path: String, accessToken: String) async throws {
+        guard isConfigured else { throw SupabaseError.missingConfig }
+        let encoded = path.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? path
+        guard let endpoint = URL(string: "\(url)/storage/v1/object/\(bucket)/\(encoded)") else { return }
+        var req = URLRequest(url: endpoint)
+        req.httpMethod = "DELETE"
+        req.setValue(anonKey, forHTTPHeaderField: "apikey")
+        req.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        let (data, resp) = try await session.data(for: req)
+        try Self.assertOK(resp, data: data)
+    }
+
+    /// Haal het opslagpad uit een public storage URL voor een gegeven bucket.
+    static func storagePath(fromPublicURL urlStr: String, bucket: String) -> String? {
+        let marker = "/storage/v1/object/public/\(bucket)/"
+        guard let range = urlStr.range(of: marker) else { return nil }
+        let raw = String(urlStr[range.upperBound...])
+        return raw.removingPercentEncoding ?? raw
+    }
 
     /// Upload raw data naar een Supabase Storage bucket.
     /// Retourneert de public URL van de geüploade file.

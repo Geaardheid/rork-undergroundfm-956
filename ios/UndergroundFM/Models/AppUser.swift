@@ -18,6 +18,12 @@ nonisolated struct AppUser: Codable, Identifiable, Equatable {
     var role: UserRole
     var isFoundingArtist: Bool
     var preferredLanguage: String
+    var subscriptionStatus: String?
+    var avatarUrl: String?
+
+    var hasActiveSubscription: Bool {
+        subscriptionStatus == "active" || subscriptionStatus == "trial"
+    }
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -26,6 +32,8 @@ nonisolated struct AppUser: Codable, Identifiable, Equatable {
         case role
         case isFoundingArtist = "is_founding_artist"
         case preferredLanguage = "preferred_language"
+        case subscriptionStatus = "subscription_status"
+        case avatarUrl = "avatar_url"
     }
 }
 

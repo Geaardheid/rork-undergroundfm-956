@@ -227,6 +227,51 @@ CREATE TABLE IF NOT EXISTS public.monthly_payouts (
 );
 
 -- ─────────────────────────────────────────
+-- TABEL: view_events  (luister-analytics — gebruikt door ViewTracker + profiel-stats)
+-- ─────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.view_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  track_id UUID NOT NULL REFERENCES public.tracks(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
+  session_id TEXT NOT NULL,
+  seconds_watched INTEGER NOT NULL DEFAULT 0,
+  completion_pct DECIMAL(6,4),
+  weighted_score DECIMAL(6,4),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_view_events_track ON public.view_events(track_id);
+CREATE INDEX IF NOT EXISTS idx_view_events_user ON public.view_events(user_id);
+CREATE INDEX IF NOT EXISTS idx_view_events_created ON public.view_events(created_at DESC);
+
+ALTER TABLE public.view_events ENABLE ROW LEVEL SECURITY;
+-- ViewTracker post anoniem (alleen apikey) — insert open houden.
+DROP POLICY IF EXISTS "view_events_insert" ON public.view_events;
+CREATE POLICY "view_events_insert" ON public.view_events FOR INSERT WITH CHECK (TRUE);
+-- Stats zijn aggregaat-analytics — lezen toegestaan.
+DROP POLICY IF EXISTS "view_events_read" ON public.view_events;
+CREATE POLICY "view_events_read" ON public.view_events FOR SELECT USING (TRUE);
+
+-- ─────────────────────────────────────────
+-- RLS: follows + likes (waren nog niet beveiligd)
+-- ─────────────────────────────────────────
+ALTER TABLE public.follows ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "follows_public_read" ON public.follows;
+CREATE POLICY "follows_public_read" ON public.follows FOR SELECT USING (TRUE);
+DROP POLICY IF EXISTS "follows_own_write" ON public.follows;
+CREATE POLICY "follows_own_write" ON public.follows FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "follows_own_delete" ON public.follows;
+CREATE POLICY "follows_own_delete" ON public.follows FOR DELETE USING (auth.uid() = user_id);
+
+ALTER TABLE public.likes ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "likes_own_read" ON public.likes;
+CREATE POLICY "likes_own_read" ON public.likes FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "likes_own_write" ON public.likes;
+CREATE POLICY "likes_own_write" ON public.likes FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "likes_own_delete" ON public.likes;
+CREATE POLICY "likes_own_delete" ON public.likes FOR DELETE USING (auth.uid() = user_id);
+
+-- ─────────────────────────────────────────
 -- Test invite codes (optioneel — verwijder na test)
 -- ─────────────────────────────────────────
 INSERT INTO public.invite_codes (code, is_active, max_uses)

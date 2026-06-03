@@ -8,8 +8,19 @@ import SwiftUI
 struct HomeFeedView: View {
     @Bindable var l10n: L10n
     @State private var feed = FeedStore()
+    @State private var path = NavigationPath()
 
     var body: some View {
+        NavigationStack(path: $path) {
+            content
+                .navigationDestination(for: ArtistRoute.self) { route in
+                    ArtistProfileView(route: route, l10n: l10n)
+                }
+                .toolbar(.hidden, for: .navigationBar)
+        }
+    }
+
+    private var content: some View {
         ZStack(alignment: .top) {
             AppColors.bg.ignoresSafeArea()
 
@@ -36,6 +47,9 @@ struct HomeFeedView: View {
                             l10n: l10n,
                             onSelectTrack: { track in
                                 MusicPlayer.shared.load(track: track)
+                            },
+                            onSelectArtist: { track in
+                                path.append(ArtistRoute(artistId: track.artistId, artistName: track.artistName))
                             },
                             onRetry: { Task { await feed.load(section: section) } }
                         )

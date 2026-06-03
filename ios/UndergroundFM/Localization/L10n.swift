@@ -156,6 +156,31 @@ final class L10n {
         "upload.successMessage": "Je track staat live op UndergroundFM.",
 
         "player.noTrack": "Geen nummer geselecteerd",
+
+        "profile.settings": "Instellingen",
+        "profile.notifications": "Meldingen",
+        "profile.edit": "Bewerk",
+        "profile.delete": "Verwijder",
+        "profile.likedTracks": "Gelikte tracks",
+        "profile.noLikes": "Nog geen gelikte tracks",
+        "profile.myTracks": "Mijn tracks",
+        "profile.noTracks": "Nog geen tracks",
+        "profile.uploadNew": "Upload nieuwe track",
+        "profile.editTrack": "Track bewerken",
+        "profile.bioEmpty": "Nog geen bio — tik op Bewerk om er een toe te voegen.",
+        "profile.subActive": "Premium actief",
+        "profile.subInactive": "Geen abonnement",
+        "profile.photoNoticeTitle": "Binnenkort",
+        "profile.photoNoticeBody": "Het wijzigen van je profielfoto komt binnenkort beschikbaar.",
+
+        "stats.monthTitle": "Deze maand",
+        "stats.supporters": "Actieve supporters",
+        "stats.points": "Scene punten",
+        "stats.ranking": "Underground ranking",
+
+        "artist.follow": "Volgen",
+        "artist.following": "Volgend",
+        "artist.tracksTitle": "Tracks",
     ]
 
     // MARK: - EN
@@ -250,6 +275,31 @@ final class L10n {
         "upload.successMessage": "Your track is live on UndergroundFM.",
 
         "player.noTrack": "No track selected",
+
+        "profile.settings": "Settings",
+        "profile.notifications": "Notifications",
+        "profile.edit": "Edit",
+        "profile.delete": "Delete",
+        "profile.likedTracks": "Liked tracks",
+        "profile.noLikes": "No liked tracks yet",
+        "profile.myTracks": "My tracks",
+        "profile.noTracks": "No tracks yet",
+        "profile.uploadNew": "Upload new track",
+        "profile.editTrack": "Edit track",
+        "profile.bioEmpty": "No bio yet — tap Edit to add one.",
+        "profile.subActive": "Premium active",
+        "profile.subInactive": "No subscription",
+        "profile.photoNoticeTitle": "Coming soon",
+        "profile.photoNoticeBody": "Changing your profile photo will be available soon.",
+
+        "stats.monthTitle": "This month",
+        "stats.supporters": "Active supporters",
+        "stats.points": "Scene points",
+        "stats.ranking": "Underground ranking",
+
+        "artist.follow": "Follow",
+        "artist.following": "Following",
+        "artist.tracksTitle": "Tracks",
     ]
 
     // MARK: - ES
@@ -344,5 +394,30 @@ final class L10n {
         "upload.successMessage": "Tu track está en vivo en UndergroundFM.",
 
         "player.noTrack": "Ninguna pista seleccionada",
+
+        "profile.settings": "Ajustes",
+        "profile.notifications": "Notificaciones",
+        "profile.edit": "Editar",
+        "profile.delete": "Eliminar",
+        "profile.likedTracks": "Tracks que te gustan",
+        "profile.noLikes": "Aún no hay tracks que te gusten",
+        "profile.myTracks": "Mis tracks",
+        "profile.noTracks": "Aún no hay tracks",
+        "profile.uploadNew": "Subir nuevo track",
+        "profile.editTrack": "Editar track",
+        "profile.bioEmpty": "Aún no hay bio — toca Editar para añadir una.",
+        "profile.subActive": "Premium activo",
+        "profile.subInactive": "Sin suscripción",
+        "profile.photoNoticeTitle": "Próximamente",
+        "profile.photoNoticeBody": "Cambiar tu foto de perfil estará disponible pronto.",
+
+        "stats.monthTitle": "Este mes",
+        "stats.supporters": "Seguidores activos",
+        "stats.points": "Puntos de escena",
+        "stats.ranking": "Ranking underground",
+
+        "artist.follow": "Seguir",
+        "artist.following": "Siguiendo",
+        "artist.tracksTitle": "Tracks",
     ]
 }

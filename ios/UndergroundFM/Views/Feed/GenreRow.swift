@@ -10,6 +10,7 @@ struct GenreRow: View {
     let state: FeedStore.SectionState
     @Bindable var l10n: L10n
     var onSelectTrack: (Track) -> Void = { _ in }
+    var onSelectArtist: (Track) -> Void = { _ in }
     var onRetry: () -> Void = {}
 
     var body: some View {
@@ -65,7 +66,8 @@ struct GenreRow: View {
                                 track: track,
                                 highlighted: idx == 0,
                                 width: 150,
-                                onTap: { onSelectTrack(track) }
+                                onTap: { onSelectTrack(track) },
+                                onTapArtist: { onSelectArtist(track) }
                             )
                         }
                     }

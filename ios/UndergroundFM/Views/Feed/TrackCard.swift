@@ -10,33 +10,54 @@ struct TrackCard: View {
     var highlighted: Bool = false
     var width: CGFloat = 150
     var onTap: () -> Void = {}
+    /// Optioneel: tik op de artiestennaam → navigeer naar publiek profiel.
+    var onTapArtist: (() -> Void)? = nil
 
     @State private var isPressed: Bool = false
 
     var body: some View {
-        Button(action: onTap) {
-            VStack(alignment: .leading, spacing: AppSpacing.sm) {
-                TrackThumbnail(url: track.thumbnailUrl, highlighted: highlighted)
-                    .frame(width: width)
+        VStack(alignment: .leading, spacing: AppSpacing.sm) {
+            Button(action: onTap) {
+                VStack(alignment: .leading, spacing: AppSpacing.sm) {
+                    TrackThumbnail(url: track.thumbnailUrl, highlighted: highlighted)
+                        .frame(width: width)
 
-                Text(track.title)
-                    .font(.system(size: AppFontSize.base, weight: .bold))
-                    .foregroundStyle(AppColors.textPrimary)
-                    .lineLimit(1)
+                    Text(track.title)
+                        .font(.system(size: AppFontSize.base, weight: .bold))
+                        .foregroundStyle(AppColors.textPrimary)
+                        .lineLimit(1)
+                        .frame(width: width, alignment: .leading)
+                }
+            }
+            .buttonStyle(.plain)
+            .scaleEffect(isPressed ? 0.97 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
+            .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
+                isPressed = pressing
+            }, perform: {})
 
+            artistName
+        }
+        .frame(width: width, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private var artistName: some View {
+        if let onTapArtist {
+            Button(action: onTapArtist) {
                 Text(track.artistName)
-                    .font(.system(size: AppFontSize.sm, weight: .medium))
+                    .font(.system(size: AppFontSize.sm, weight: .semibold))
                     .foregroundStyle(AppColors.textSecond)
+                    .underline()
                     .lineLimit(1)
             }
-            .frame(width: width, alignment: .leading)
+            .buttonStyle(.plain)
+        } else {
+            Text(track.artistName)
+                .font(.system(size: AppFontSize.sm, weight: .medium))
+                .foregroundStyle(AppColors.textSecond)
+                .lineLimit(1)
         }
-        .buttonStyle(.plain)
-        .scaleEffect(isPressed ? 0.97 : 1.0)
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
-        .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
-            isPressed = pressing
-        }, perform: {})
     }
 }
 
