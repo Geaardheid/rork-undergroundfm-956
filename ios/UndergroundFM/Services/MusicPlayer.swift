@@ -7,7 +7,9 @@
 //
 
 import AVFoundation
+import MediaPlayer
 import Observation
+import UIKit
 
 @Observable
 final class MusicPlayer {
@@ -21,9 +23,11 @@ final class MusicPlayer {
     private var player: AVPlayer?
     private var timeObserver: Any?
     private var statusObserver: NSKeyValueObservation?
+    private var artworkTask: Task<Void, Never>?
 
     private init() {
         configureAudioSession()
+        setupRemoteCommands()
     }
 
     /// Configure the shared audio session for background playback.
@@ -74,6 +78,8 @@ final class MusicPlayer {
 
         observe(playerItem: item)
         play()
+        updateNowPlayingInfo()
+        loadArtwork(from: track.thumbnailUrl)
 
         if let uid = SessionStore.shared.session?.userId {
             ViewTracker.shared.startSession(track: track, userId: uid)
@@ -85,12 +91,14 @@ final class MusicPlayer {
     func play() {
         player?.play()
         isPlaying = true
+        updateNowPlayingPlaybackState()
     }
 
     func pause() {
         ViewTracker.shared.endSession()
         player?.pause()
         isPlaying = false
+        updateNowPlayingPlaybackState()
     }
 
     func togglePlayPause() {
@@ -101,6 +109,7 @@ final class MusicPlayer {
         let cmTime = CMTime(seconds: time, preferredTimescale: 600)
         player?.seek(to: cmTime, toleranceBefore: .zero, toleranceAfter: .zero)
         currentTime = time
+        updateNowPlayingPlaybackState()
     }
 
     func skipForward(seconds: TimeInterval = 15) {
@@ -114,6 +123,8 @@ final class MusicPlayer {
     func clear() {
         ViewTracker.shared.endSession()
         removeObservers()
+        artworkTask?.cancel()
+        artworkTask = nil
         player?.pause()
         player?.replaceCurrentItem(with: nil)
         player = nil
@@ -121,6 +132,7 @@ final class MusicPlayer {
         isPlaying = false
         currentTime = 0
         duration = 0
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
     }
 
     // MARK: - Private
@@ -169,6 +181,82 @@ final class MusicPlayer {
         }
         statusObserver?.invalidate()
         statusObserver = nil
+    }
+
+    // MARK: - Now Playing & Remote Commands
+
+    private func setupRemoteCommands() {
+        let center = MPRemoteCommandCenter.shared()
+
+        center.playCommand.addTarget { [weak self] _ in
+            guard let self, !self.isPlaying else { return .commandFailed }
+            self.play()
+            return .success
+        }
+
+        center.pauseCommand.addTarget { [weak self] _ in
+            guard let self, self.isPlaying else { return .commandFailed }
+            self.pause()
+            return .success
+        }
+
+        center.togglePlayPauseCommand.addTarget { [weak self] _ in
+            guard let self else { return .commandFailed }
+            self.togglePlayPause()
+            return .success
+        }
+
+        center.changePlaybackPositionCommand.addTarget { [weak self] event in
+            guard let self,
+                  let event = event as? MPChangePlaybackPositionCommandEvent else {
+                return .commandFailed
+            }
+            self.seek(to: event.positionTime)
+            return .success
+        }
+    }
+
+    /// Refresh the full Now Playing entry (title, artist, duration).
+    private func updateNowPlayingInfo() {
+        guard let track = currentTrack else {
+            MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+            return
+        }
+        var info = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [String: Any]()
+        info[MPMediaItemPropertyTitle] = track.title
+        info[MPMediaItemPropertyArtist] = track.artistName
+        info[MPMediaItemPropertyPlaybackDuration] = duration
+        info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = currentTime
+        info[MPNowPlayingInfoPropertyPlaybackRate] = isPlaying ? 1.0 : 0.0
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = info
+    }
+
+    /// Update only the elapsed time + playback rate (cheap, called often).
+    private func updateNowPlayingPlaybackState() {
+        guard currentTrack != nil else { return }
+        var info = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [String: Any]()
+        info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = currentTime
+        info[MPNowPlayingInfoPropertyPlaybackRate] = isPlaying ? 1.0 : 0.0
+        info[MPMediaItemPropertyPlaybackDuration] = duration
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = info
+    }
+
+    /// Fetch the cover art and attach it as lock screen artwork.
+    private func loadArtwork(from urlString: String?) {
+        artworkTask?.cancel()
+        guard let urlString, let url = URL(string: urlString) else { return }
+        artworkTask = Task { [weak self] in
+            guard let (data, _) = try? await URLSession.shared.data(from: url),
+                  let image = UIImage(data: data) else { return }
+            if Task.isCancelled { return }
+            await MainActor.run {
+                guard let self, self.currentTrack?.thumbnailUrl == urlString else { return }
+                let artwork = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
+                var info = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [String: Any]()
+                info[MPMediaItemPropertyArtwork] = artwork
+                MPNowPlayingInfoCenter.default().nowPlayingInfo = info
+            }
+        }
     }
 
     private func formatTime(_ seconds: TimeInterval) -> String {
