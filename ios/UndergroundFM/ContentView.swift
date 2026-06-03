@@ -11,7 +11,12 @@ struct RootView: View {
 
     var body: some View {
         Group {
-            if auth.isAuthenticated {
+            if auth.isBooting {
+                LogoView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(AppColors.bg.ignoresSafeArea())
+                    .transition(.opacity)
+            } else if auth.isAuthenticated {
                 MainTabView(l10n: l10n)
                     .transition(.opacity)
             } else {
@@ -20,6 +25,7 @@ struct RootView: View {
             }
         }
         .animation(.easeInOut(duration: 0.25), value: auth.isAuthenticated)
+        .animation(.easeInOut(duration: 0.25), value: auth.isBooting)
     }
 }
 

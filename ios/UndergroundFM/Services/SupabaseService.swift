@@ -101,6 +101,28 @@ nonisolated final class SupabaseService: @unchecked Sendable {
         )
     }
 
+    /// Exchange a stored refresh token for a fresh session (access tokens expire ~1h).
+    func refreshSession(refreshToken: String) async throws -> AuthSession {
+        guard isConfigured else { throw SupabaseError.missingConfig }
+        let endpoint = URL(string: "\(url)/auth/v1/token?grant_type=refresh_token")!
+        var req = URLRequest(url: endpoint)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue(anonKey, forHTTPHeaderField: "apikey")
+        let body: [String: Any] = ["refresh_token": refreshToken]
+        req.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, resp) = try await session.data(for: req)
+        try Self.assertOK(resp, data: data)
+        let decoded = try JSONDecoder().decode(SignInResponse.self, from: data)
+        return AuthSession(
+            accessToken: decoded.access_token,
+            refreshToken: decoded.refresh_token,
+            userId: decoded.user.id,
+            email: decoded.user.email ?? ""
+        )
+    }
+
     func signOut(accessToken: String) async throws {
         guard isConfigured else { throw SupabaseError.missingConfig }
         let endpoint = URL(string: "\(url)/auth/v1/logout")!

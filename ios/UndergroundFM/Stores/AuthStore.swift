@@ -14,6 +14,40 @@ final class AuthStore {
     var errorMessage: String?
 
     var isAuthenticated: Bool { currentUser != nil }
+    var isBooting: Bool = true
+
+    /// Restore a persisted session on app launch so the user stays logged in.
+    func restoreSession() async {
+        defer { isBooting = false }
+        guard let stored = SessionStore.shared.session else { return }
+
+        // Refresh the access token (they expire ~1h); fall back to the stored token.
+        var token = stored.accessToken
+        if let refreshed = try? await SupabaseService.shared.refreshSession(refreshToken: stored.refreshToken) {
+            SessionStore.shared.save(refreshed)
+            token = refreshed.accessToken
+        }
+
+        do {
+            let users: [AppUser] = try await SupabaseService.shared.select(
+                AppUser.self,
+                from: "users",
+                query: ["id": "eq.\(stored.userId)", "select": "*", "limit": "1"],
+                accessToken: token
+            )
+            guard let user = users.first else {
+                // Token no longer valid / user removed — clear stale session.
+                SessionStore.shared.clear()
+                return
+            }
+            self.currentUser = user
+            if user.role == .artist {
+                await self.loadArtistId()
+            }
+        } catch {
+            // Keep the session; transient network errors shouldn't force a logout.
+        }
+    }
 
     func signIn(email: String, password: String) async {
         isLoading = true

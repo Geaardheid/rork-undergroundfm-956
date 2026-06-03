@@ -22,6 +22,24 @@ final class MusicPlayer {
     private var timeObserver: Any?
     private var statusObserver: NSKeyValueObservation?
 
+    private init() {
+        configureAudioSession()
+    }
+
+    /// Configure the shared audio session for background playback.
+    private func configureAudioSession() {
+        do {
+            try AVAudioSession.sharedInstance().setCategory(
+                .playback,
+                mode: .default,
+                options: []
+            )
+            try AVAudioSession.sharedInstance().setActive(true)
+        } catch {
+            print("Audio session error: \(error)")
+        }
+    }
+
     var progress: Double {
         guard duration > 0 else { return 0 }
         return currentTime / duration

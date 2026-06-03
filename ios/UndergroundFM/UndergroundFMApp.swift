@@ -15,6 +15,9 @@ struct UndergroundFMApp: App {
             RootView(l10n: l10n)
                 .environment(auth)
                 .preferredColorScheme(.dark)
+                .task {
+                    await auth.restoreSession()
+                }
         }
     }
 }
