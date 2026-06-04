@@ -7,9 +7,11 @@
 //
 
 import SwiftUI
+import PhotosUI
 
 struct ProfileView: View {
     @Environment(AuthStore.self) private var auth
+    @Environment(\.openURL) private var openURL
     @Bindable var l10n: L10n
     @State private var vm = ProfileViewModel()
     @State private var settings = AppSettings.shared
@@ -17,9 +19,10 @@ struct ProfileView: View {
     @State private var showBecomeArtist: Bool = false
     @State private var showSettings: Bool = false
     @State private var showUpload: Bool = false
-    @State private var showPhotoNotice: Bool = false
     @State private var isEditingBio: Bool = false
     @State private var editingTrack: Track?
+    @State private var avatarItem: PhotosPickerItem?
+    @State private var bannerItem: PhotosPickerItem?
 
     var body: some View {
         NavigationStack {
@@ -58,10 +61,25 @@ struct ProfileView: View {
                 .presentationDetents([.medium])
                 .presentationBackground(AppColors.bg)
             }
-            .alert(l10n.t("profile.photoNoticeTitle"), isPresented: $showPhotoNotice) {
-                Button(l10n.t("common.done"), role: .cancel) {}
-            } message: {
-                Text(l10n.t("profile.photoNoticeBody"))
+            .onChange(of: avatarItem) { _, item in
+                guard let item else { return }
+                Task {
+                    guard let data = try? await item.loadTransferable(type: Data.self),
+                          let userId = auth.currentUser?.id else { return }
+                    if let url = await vm.uploadAvatar(userId: userId, imageData: data) {
+                        auth.updateAvatarUrl(url)
+                    }
+                    avatarItem = nil
+                }
+            }
+            .onChange(of: bannerItem) { _, item in
+                guard let item else { return }
+                Task {
+                    guard let data = try? await item.loadTransferable(type: Data.self),
+                          let aId = auth.artistId else { return }
+                    await vm.uploadBanner(artistId: aId, imageData: data)
+                    bannerItem = nil
+                }
             }
         }
         .task(id: taskKey) { await loadData() }
@@ -101,19 +119,52 @@ struct ProfileView: View {
     // MARK: - Header
 
     private var header: some View {
-        VStack(spacing: AppSpacing.md) {
-            ProfileAvatar(initials: initials, photoUrl: auth.currentUser?.avatarUrl) {
-                showPhotoNotice = true
+        VStack(spacing: 0) {
+            ZStack(alignment: .bottom) {
+                ProfileBanner(bannerUrl: isArtist ? vm.artistProfile?.bannerUrl : nil, seed: initials)
+                    .overlay(alignment: .topTrailing) {
+                        if isArtist { bannerEditButton }
+                    }
+                ProfileAvatar(
+                    initials: initials,
+                    photoUrl: auth.currentUser?.avatarUrl,
+                    size: 80,
+                    pickerItem: $avatarItem,
+                    isUploading: vm.isUploadingAvatar
+                )
+                .offset(y: 40)
             }
+            .padding(.bottom, 40)
 
-            VStack(spacing: 2) {
-                Text(displayName)
-                    .font(.system(size: AppFontSize.xl, weight: .black))
-                    .foregroundStyle(AppColors.textPrimary)
-                Text(auth.currentUser?.email ?? "")
-                    .font(.system(size: AppFontSize.sm, weight: .medium))
-                    .foregroundStyle(AppColors.textSecond)
-            }
+            infoBlock
+                .padding(.top, AppSpacing.sm)
+        }
+    }
+
+    private var bannerEditButton: some View {
+        PhotosPicker(selection: $bannerItem, matching: .images) {
+            Image(systemName: vm.isUploadingBanner ? "arrow.triangle.2.circlepath" : "camera.fill")
+                .font(.system(size: 13, weight: .black))
+                .foregroundStyle(AppColors.yellowText)
+                .frame(width: 34, height: 34)
+                .background(AppColors.yellow)
+                .clipShape(Circle())
+                .overlay(Circle().stroke(AppColors.bg.opacity(0.4), lineWidth: 1))
+        }
+        .buttonStyle(PressableScaleStyle())
+        .padding(AppSpacing.md)
+    }
+
+    private var infoBlock: some View {
+        VStack(spacing: AppSpacing.sm) {
+            Text(displayName)
+                .font(.system(size: AppFontSize.lg, weight: .black))
+                .foregroundStyle(AppColors.textPrimary)
+                .multilineTextAlignment(.center)
+
+            Text(auth.currentUser?.email ?? "")
+                .font(.system(size: AppFontSize.sm, weight: .medium))
+                .foregroundStyle(AppColors.textSecond)
 
             HStack(spacing: AppSpacing.sm) {
                 if isArtist, auth.currentUser?.isFoundingArtist == true {
@@ -127,7 +178,12 @@ struct ProfileView: View {
                     )
                 }
             }
+
+            if isArtist, let handle = vm.artistProfile?.instagramHandleValue {
+                InstagramLink(handle: handle) { openURL($0) }
+            }
         }
+        .padding(.horizontal, AppSpacing.lg)
     }
 
     // MARK: - Fan sections

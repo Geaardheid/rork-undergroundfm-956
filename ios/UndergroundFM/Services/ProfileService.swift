@@ -103,6 +103,50 @@ final class ProfileService {
         return videoURL
     }
 
+    /// Upload een nieuwe profielfoto naar de `avatars` bucket en sla de URL op in users.
+    func updateUserAvatar(userId: String, imageData: Data) async throws -> String {
+        guard let token = SessionStore.shared.session?.accessToken else {
+            throw SupabaseError.message(L10n.shared.t("errors.unknown"))
+        }
+        let path = "\(userId)/\(UUID().uuidString).jpg"
+        let url = try await sb.uploadToStorage(
+            bucket: "avatars",
+            path: path,
+            data: imageData,
+            contentType: "image/jpeg",
+            accessToken: token
+        )
+        try await sb.update(
+            table: "users",
+            query: ["id": "eq.\(userId)"],
+            values: ["avatar_url": url],
+            accessToken: token
+        )
+        return url
+    }
+
+    /// Upload een nieuwe profielbanner naar de `banners` bucket en sla de URL op bij de artiest.
+    func updateArtistBanner(artistId: String, imageData: Data) async throws -> String {
+        guard let token = SessionStore.shared.session?.accessToken else {
+            throw SupabaseError.message(L10n.shared.t("errors.unknown"))
+        }
+        let path = "\(artistId)/\(UUID().uuidString).jpg"
+        let url = try await sb.uploadToStorage(
+            bucket: "banners",
+            path: path,
+            data: imageData,
+            contentType: "image/jpeg",
+            accessToken: token
+        )
+        try await sb.update(
+            table: "artists",
+            query: ["id": "eq.\(artistId)"],
+            values: ["banner_url": url],
+            accessToken: token
+        )
+        return url
+    }
+
     /// Verwijder een eigen track uit de database én bijbehorende storage-bestanden.
     func deleteTrack(_ track: Track) async throws {
         guard let token = SessionStore.shared.session?.accessToken else {

@@ -21,6 +21,10 @@ final class ProfileViewModel {
     var stats: ArtistMonthStats = .empty
     var statsLoading: Bool = false
 
+    var artistProfile: ArtistProfile?
+    var isUploadingAvatar: Bool = false
+    var isUploadingBanner: Bool = false
+
     var bio: String = ""
     var isSavingBio: Bool = false
 
@@ -37,7 +41,35 @@ final class ProfileViewModel {
     func loadArtistData(artistId: String) async {
         async let tracks: () = loadMyTracks(artistId: artistId)
         async let stats: () = loadStats(artistId: artistId)
-        _ = await (tracks, stats)
+        async let profile: () = loadProfile(artistId: artistId)
+        _ = await (tracks, stats, profile)
+    }
+
+    func loadProfile(artistId: String) async {
+        if let p = try? await ProfileService.shared.fetchProfile(artistId: artistId) {
+            artistProfile = p
+        }
+    }
+
+    /// Upload een nieuwe profielfoto; retourneert de nieuwe URL bij succes.
+    func uploadAvatar(userId: String, imageData: Data) async -> String? {
+        isUploadingAvatar = true
+        defer { isUploadingAvatar = false }
+        return try? await ProfileService.shared.updateUserAvatar(userId: userId, imageData: imageData)
+    }
+
+    /// Upload een nieuwe profielbanner; werkt het lokale profiel direct bij.
+    func uploadBanner(artistId: String, imageData: Data) async {
+        isUploadingBanner = true
+        defer { isUploadingBanner = false }
+        guard let url = try? await ProfileService.shared.updateArtistBanner(artistId: artistId, imageData: imageData) else { return }
+        if let p = artistProfile {
+            artistProfile = ArtistProfile(
+                id: p.id, userId: p.userId, artistName: p.artistName, bio: p.bio,
+                genreTags: p.genreTags, instagramUrl: p.instagramUrl, instagramHandle: p.instagramHandle,
+                bannerUrl: url, verified: p.verified, users: p.users
+            )
+        }
     }
 
     func loadMyTracks(artistId: String) async {

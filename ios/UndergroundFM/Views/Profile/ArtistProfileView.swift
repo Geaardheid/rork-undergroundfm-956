@@ -11,6 +11,7 @@ struct ArtistProfileView: View {
     let route: ArtistRoute
     @Bindable var l10n: L10n
     @Environment(AuthStore.self) private var auth
+    @Environment(\.openURL) private var openURL
 
     @State private var profile: ArtistProfile?
     @State private var tracks: [Track] = []
@@ -29,12 +30,12 @@ struct ArtistProfileView: View {
                     header
                     StatsRow(stats: stats, isLoading: statsLoading, l10n: l10n)
                         .padding(.horizontal, AppSpacing.lg)
+                        .padding(.top, AppSpacing.sm)
                     followButton
                         .padding(.horizontal, AppSpacing.lg)
                     tracksSection
                     Color.clear.frame(height: 120)
                 }
-                .padding(.top, AppSpacing.lg)
             }
             .refreshable { await load() }
             .tint(AppColors.yellow)
@@ -49,15 +50,24 @@ struct ArtistProfileView: View {
 
     private var header: some View {
         VStack(spacing: AppSpacing.md) {
-            ProfileAvatar(initials: initials, photoUrl: profile?.avatarUrl, size: 100)
+            ZStack(alignment: .bottom) {
+                ProfileBanner(bannerUrl: profile?.bannerUrl, seed: initials)
+                ProfileAvatar(initials: initials, photoUrl: profile?.avatarUrl, size: 80)
+                    .offset(y: 40)
+            }
+            .padding(.bottom, 40)
 
             Text(profile?.artistName ?? route.artistName)
-                .font(.system(size: AppFontSize.xxl, weight: .black))
+                .font(.system(size: AppFontSize.xl, weight: .black))
                 .foregroundStyle(AppColors.textPrimary)
                 .multilineTextAlignment(.center)
 
             if profile?.isFoundingArtist == true {
                 FoundingBadge(label: l10n.t("invite.foundingBadge"))
+            }
+
+            if let handle = profile?.instagramHandleValue {
+                InstagramLink(handle: handle) { openURL($0) }
             }
 
             if let bio = profile?.bio, !bio.isEmpty {

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import PhotosUI
 
 // MARK: - Avatar
 
@@ -14,10 +15,16 @@ struct ProfileAvatar: View {
     var photoUrl: String? = nil
     var size: CGFloat = 96
     var onTap: (() -> Void)? = nil
+    /// Wanneer gezet, opent een tik op de avatar de fotokiezer.
+    var pickerItem: Binding<PhotosPickerItem?>? = nil
+    var isUploading: Bool = false
 
     var body: some View {
         Group {
-            if let onTap {
+            if let pickerItem {
+                PhotosPicker(selection: pickerItem, matching: .images) { avatar }
+                    .buttonStyle(PressableScaleStyle())
+            } else if let onTap {
                 Button(action: onTap) { avatar }
                     .buttonStyle(PressableScaleStyle())
             } else {
@@ -25,6 +32,8 @@ struct ProfileAvatar: View {
             }
         }
     }
+
+    private var isEditable: Bool { pickerItem != nil || onTap != nil }
 
     private var avatar: some View {
         ZStack {
@@ -45,7 +54,13 @@ struct ProfileAvatar: View {
                     }
                 }
                 .clipShape(Circle())
-            if onTap != nil {
+                .overlay {
+                    if isUploading {
+                        Circle().fill(.black.opacity(0.45))
+                            .overlay(ProgressView().tint(AppColors.yellow))
+                    }
+                }
+            if isEditable {
                 Circle()
                     .fill(AppColors.yellow)
                     .frame(width: size * 0.3, height: size * 0.3)
@@ -75,6 +90,7 @@ struct StatCard: View {
     let label: String
     var accent: Bool = false
     var isLoading: Bool = false
+    var glow: Bool = false
 
     var body: some View {
         VStack(spacing: 6) {
@@ -102,9 +118,10 @@ struct StatCard: View {
         .background(AppColors.card)
         .overlay(
             RoundedRectangle(cornerRadius: AppRadius.md)
-                .stroke(AppColors.border, lineWidth: 1)
+                .stroke(glow ? AppColors.yellow.opacity(0.7) : AppColors.border, lineWidth: glow ? 1.5 : 1)
         )
         .clipShape(.rect(cornerRadius: AppRadius.md))
+        .shadow(color: glow ? AppColors.yellow.opacity(0.45) : .clear, radius: 16)
     }
 }
 
@@ -118,20 +135,30 @@ struct StatsRow: View {
             StatCard(
                 value: "\(stats.supporters)",
                 label: l10n.t("stats.supporters"),
-                isLoading: isLoading
+                isLoading: isLoading,
+                glow: !isLoading && glowIndex == 0
             )
             StatCard(
                 value: formatPoints(stats.scenePoints),
                 label: l10n.t("stats.points"),
                 accent: true,
-                isLoading: isLoading
+                isLoading: isLoading,
+                glow: !isLoading && glowIndex == 1
             )
             StatCard(
                 value: stats.ranking > 0 ? "#\(stats.ranking)" : "—",
                 label: l10n.t("stats.ranking"),
-                isLoading: isLoading
+                isLoading: isLoading,
+                glow: !isLoading && glowIndex == 2
             )
         }
+    }
+
+    /// Bepaalt welke kaart de gele glow krijgt: een top-3 ranking wint, anders
+    /// de hoogste van supporters vs. scene-punten.
+    private var glowIndex: Int {
+        if stats.ranking > 0 && stats.ranking <= 3 { return 2 }
+        return stats.scenePoints >= Double(stats.supporters) ? 1 : 0
     }
 
     private func formatPoints(_ v: Double) -> String {
@@ -196,6 +223,33 @@ struct SubscriptionBadge: View {
         .background(color.opacity(0.12))
         .overlay(Capsule().stroke(color.opacity(0.4), lineWidth: 1))
         .clipShape(Capsule())
+    }
+}
+
+// MARK: - Instagram link
+
+struct InstagramLink: View {
+    let handle: String
+    let onOpen: (URL) -> Void
+
+    var body: some View {
+        Button {
+            if let url = URL(string: "https://instagram.com/\(handle)") { onOpen(url) }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "camera.circle.fill")
+                    .font(.system(size: 16, weight: .bold))
+                Text("@\(handle)")
+                    .font(.system(size: AppFontSize.sm, weight: .bold))
+            }
+            .foregroundStyle(AppColors.yellow)
+            .padding(.horizontal, AppSpacing.md)
+            .padding(.vertical, 7)
+            .background(AppColors.yellow.opacity(0.12))
+            .overlay(Capsule().stroke(AppColors.yellow.opacity(0.4), lineWidth: 1))
+            .clipShape(Capsule())
+        }
+        .buttonStyle(PressableScaleStyle())
     }
 }
 

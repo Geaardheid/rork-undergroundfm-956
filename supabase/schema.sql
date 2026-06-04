@@ -65,6 +65,8 @@ CREATE TABLE IF NOT EXISTS public.artists (
   bio TEXT CHECK (char_length(bio) <= 500),
   genre_tags TEXT[] DEFAULT '{}',
   instagram_url TEXT,
+  instagram_handle TEXT,
+  banner_url TEXT,
   invite_code_used TEXT,
   verified BOOLEAN NOT NULL DEFAULT FALSE,
   payout_iban TEXT,
@@ -327,6 +329,35 @@ DROP POLICY IF EXISTS "clips_artist_write" ON storage.objects;
 CREATE POLICY "clips_artist_write" ON storage.objects
   FOR ALL USING (bucket_id = 'clips' AND auth.role() = 'authenticated')
   WITH CHECK (bucket_id = 'clips' AND auth.role() = 'authenticated');
+
+-- Bestaande projecten: voeg de nieuwe artiest-kolommen toe als ze nog niet bestaan.
+ALTER TABLE public.artists ADD COLUMN IF NOT EXISTS instagram_handle TEXT;
+ALTER TABLE public.artists ADD COLUMN IF NOT EXISTS banner_url TEXT;
+
+-- ─────────────────────────────────────────
+-- STORAGE: avatars + banners buckets
+-- ─────────────────────────────────────────
+-- Publieke buckets voor profielfoto's en profielbanners.
+-- Pad-conventie: {user_id}/{uuid}.jpg (avatars), {artist_id}/{uuid}.jpg (banners).
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('avatars', 'avatars', TRUE), ('banners', 'banners', TRUE)
+ON CONFLICT (id) DO NOTHING;
+
+DROP POLICY IF EXISTS "avatars_public_read" ON storage.objects;
+CREATE POLICY "avatars_public_read" ON storage.objects
+  FOR SELECT USING (bucket_id = 'avatars');
+DROP POLICY IF EXISTS "avatars_auth_write" ON storage.objects;
+CREATE POLICY "avatars_auth_write" ON storage.objects
+  FOR ALL USING (bucket_id = 'avatars' AND auth.role() = 'authenticated')
+  WITH CHECK (bucket_id = 'avatars' AND auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "banners_public_read" ON storage.objects;
+CREATE POLICY "banners_public_read" ON storage.objects
+  FOR SELECT USING (bucket_id = 'banners');
+DROP POLICY IF EXISTS "banners_auth_write" ON storage.objects;
+CREATE POLICY "banners_auth_write" ON storage.objects
+  FOR ALL USING (bucket_id = 'banners' AND auth.role() = 'authenticated')
+  WITH CHECK (bucket_id = 'banners' AND auth.role() = 'authenticated');
 
 -- ─────────────────────────────────────────
 -- Test invite codes (optioneel — verwijder na test)

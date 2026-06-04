@@ -253,6 +253,11 @@ final class AuthStore {
         errorMessage = nil
     }
 
+    /// Werk de lokale profielfoto-URL bij na een upload (UI ververst direct).
+    func updateAvatarUrl(_ url: String) {
+        currentUser?.avatarUrl = url
+    }
+
     // MARK: - E-mailbevestiging (pending signup)
 
     private func savePending(_ p: PendingSignUp) {

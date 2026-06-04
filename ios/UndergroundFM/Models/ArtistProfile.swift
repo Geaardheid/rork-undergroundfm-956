@@ -15,11 +15,29 @@ nonisolated struct ArtistProfile: Codable, Identifiable, Hashable {
     let bio: String?
     let genreTags: [String]
     let instagramUrl: String?
+    let instagramHandle: String?
+    let bannerUrl: String?
     let verified: Bool
     let users: EmbeddedArtistUser?
 
     var isFoundingArtist: Bool { users?.isFoundingArtist ?? false }
     var avatarUrl: String? { users?.avatarUrl }
+
+    /// Genormaliseerde Instagram-handle (zonder @, url-prefix of trailing slash).
+    var instagramHandleValue: String? {
+        Self.normalizeHandle(instagramHandle) ?? Self.normalizeHandle(instagramUrl)
+    }
+
+    static func normalizeHandle(_ raw: String?) -> String? {
+        guard var s = raw?.trimmingCharacters(in: .whitespacesAndNewlines), !s.isEmpty else { return nil }
+        for prefix in ["https://", "http://", "www.", "instagram.com/", "instagr.am/"] {
+            if s.lowercased().hasPrefix(prefix) { s = String(s.dropFirst(prefix.count)) }
+        }
+        s = s.trimmingCharacters(in: CharacterSet(charactersIn: "@/ "))
+        if let slash = s.firstIndex(of: "/") { s = String(s[..<slash]) }
+        if let q = s.firstIndex(of: "?") { s = String(s[..<q]) }
+        return s.isEmpty ? nil : s
+    }
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -28,6 +46,8 @@ nonisolated struct ArtistProfile: Codable, Identifiable, Hashable {
         case bio
         case genreTags = "genre_tags"
         case instagramUrl = "instagram_url"
+        case instagramHandle = "instagram_handle"
+        case bannerUrl = "banner_url"
         case verified
         case users
     }
