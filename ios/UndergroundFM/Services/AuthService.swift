@@ -31,7 +31,17 @@ final class AuthService {
     // NB: Stel de redirect URL in Supabase Dashboard → Authentication → URL
     // Configuration in op: undergroundfm://auth/callback
     func signUpFan(email: String, password: String, displayName: String, language: AppLanguage) async throws -> SignUpOutcome {
-        let result = try await sb.signUp(email: email, password: password)
+        let result: (userId: String, accessToken: String?, refreshToken: String?)
+        do {
+            result = try await sb.signUp(email: email, password: password)
+        } catch {
+            // Errors die betekenen dat de bevestigingsmail (waarschijnlijk) al
+            // verstuurd is: ga naar het verify-scherm i.p.v. een fout te tonen.
+            if Self.errorMeansConfirmationSent(error) {
+                return .needsConfirmation
+            }
+            throw error
+        }
 
         guard let session = await sessionAfterSignUp(email: email, password: password, result: result) else {
             return .needsConfirmation
@@ -86,7 +96,15 @@ final class AuthService {
         }
 
         // Stap 2: sign up
-        let result = try await sb.signUp(email: email, password: password)
+        let result: (userId: String, accessToken: String?, refreshToken: String?)
+        do {
+            result = try await sb.signUp(email: email, password: password)
+        } catch {
+            if Self.errorMeansConfirmationSent(error) {
+                return .needsConfirmation
+            }
+            throw error
+        }
         guard let session = await sessionAfterSignUp(email: email, password: password, result: result) else {
             // E-mailbevestiging vereist — provisioning gebeurt na bevestiging.
             return .needsConfirmation
@@ -154,6 +172,22 @@ final class AuthService {
     }
 
     // MARK: - Helpers
+
+    /// Bepaalt of een signup-fout betekent dat de bevestigingsmail in feite al is
+    /// verstuurd (rate limit, reeds geregistreerd, bevestiging vereist). In die
+    /// gevallen tonen we geen fout maar gaan we door naar VerifyEmailView.
+    /// Echte invoerfouten (ongeldig e-mailformaat, te kort wachtwoord) en
+    /// netwerkfouten blijven gewoon doorgegooid worden.
+    private static func errorMeansConfirmationSent(_ error: Error) -> Bool {
+        let message = error.localizedDescription.lowercased()
+        let confirmationHints = [
+            "security purposes",
+            "rate limit",
+            "already registered",
+            "confirmation"
+        ]
+        return confirmationHints.contains { message.contains($0) }
+    }
 
     private struct InsertResult: Decodable { let id: String? }
 
