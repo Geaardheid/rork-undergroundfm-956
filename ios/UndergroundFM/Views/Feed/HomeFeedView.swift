@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct HomeFeedView: View {
+    @Environment(AuthStore.self) private var auth
     @Bindable var l10n: L10n
     @State private var feed = FeedStore()
     @State private var path = NavigationPath()
@@ -80,21 +81,41 @@ struct HomeFeedView: View {
 
     private var header: some View {
         HStack(alignment: .center) {
-            Image("logo")
+            ProfileAvatar(
+                initials: initials,
+                photoUrl: auth.currentUser?.avatarUrl,
+                size: 28
+            )
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Image("AppIcon")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(height: 32)
+                .frame(height: 36)
                 .accessibilityLabel("UndergroundFM")
-            Spacer()
+
             HStack(spacing: AppSpacing.md) {
                 headerIcon("magnifyingglass") { showSearch = true }
                 headerIcon("bell") {}
             }
+            .frame(maxWidth: .infinity, alignment: .trailing)
         }
         .padding(.horizontal, AppSpacing.lg)
         .padding(.vertical, AppSpacing.sm)
         .background(headerBackground)
         .overlay(alignment: .bottom) { yellowGlowLine }
+    }
+
+    private var initials: String {
+        let name = auth.currentUser?.displayName ?? auth.currentUser?.email ?? ""
+        let parts = name.split(separator: " ")
+        if let first = parts.first?.first {
+            if parts.count > 1, let second = parts[1].first {
+                return "\(first)\(second)".uppercased()
+            }
+            return String(first).uppercased()
+        }
+        return "?"
     }
 
     /// Dunne gele lijn met zachte glow onderaan de navigatiebalk.
