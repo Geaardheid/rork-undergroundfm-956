@@ -1,44 +1,41 @@
-# Add a first-launch onboarding flow for Underground FM
+# Build the Library (Bibliotheek) tab with liked tracks, followed artists & playlists — DONE
 
-## What this adds
+## Library tab (YT Music style, Underground FM colors)
 
-A swipeable, three-slide welcome experience that appears only the very first time the app is installed. Once the user finishes it, it never shows again — they go straight to the normal login screen on future launches.
+A new full Library screen replaces the current "Coming soon" placeholder on the Bibliotheek tab. Black background with yellow accents, matching the rest of the app.
 
-## Behavior
+**Top of screen**
+- Three horizontal filter chips: **Tracks · Artiesten · Playlists**. Selected chip is filled yellow, others are dark outlined.
+- A sort dropdown (only shown on the Tracks filter) with: **Onlangs afgespeeld**, **Onlangs geliket**, **A–Z**.
 
-- **Shows once:** A flag is saved when onboarding is finished. On first install the flow appears; after that the app skips it and goes directly to the login screen.
-- The existing login and registration screens, sign-in/sign-up logic, music player, and all other screens stay exactly the same.
-- The role you pick on Slide 2 (Fan or Artist) is remembered and pre-selects the matching option when you reach the registration screen.
+**Tracks section**
+- List of the user's liked tracks. Each row: square cover art, title, artist name, play count (formatted like "1.2K").
+- Tap a track to play it.
+- Swipe left on a row to unlike (removes it instantly).
+- "Onlangs afgespeeld" orders by last played using the play history; "Onlangs geliket" by like date; "A–Z" by title.
 
-## Design
+**Artiesten section**
+- List of artists the user follows. Each row: round avatar, artist name, genre tags, and a founding badge when applicable.
+- Tap to open that artist's public profile page.
 
-- Full black background, bold white and yellow text matching the Underground FM brand.
-- Horizontal swipe between the three slides with yellow dot indicators at the bottom.
-- Text follows the app's current language (Dutch by default, with English as well). No language picker on these screens — kept clean.
+**Playlists section**
+- A **"Nieuwe playlist"** button at the top opens a sheet to create a playlist: name, description, and a public/private toggle.
+- List of the user's playlists. Each shows a cover, name, track count, and a public/private badge.
+  - Cover is a 2x2 collage of the first 4 track covers when the playlist has 4+ tracks.
+  - With fewer than 4 tracks, it shows the first track's cover with a yellow gradient overlay and the playlist name in bold white text centered on top.
+- Tap a playlist to open a **playlist detail screen** showing all its tracks with a **"Alles afspelen"** (play all) button that starts from the first track.
 
-## Slides
+**Empty states**
+- Friendly empty messages per section (e.g. "Nog geen gelikete tracks", "Je volgt nog geen artiesten", "Maak je eerste playlist").
 
-**Slide 1 — Alleen Underground**
-- Large bold white "ALLEEN" above large bold yellow "UNDERGROUND".
-- Subtitle about being the first streaming platform exclusively for independent Dutch artists, fair payout, no mainstream.
-- A row of four small stat badges: "€5/maand", "50% naar artiesten", "100 founding spots", "0× mainstream".
-- Yellow "Volgende" button in the bottom right that advances to the next slide.
+## Fixes included
+- Ensure the play-count increment works reliably: correct the database function so it runs, confirm it's called each time a listening session ends, and confirm listeners are allowed to record plays. (The function and call are already wired; I'll fix a small SQL syntax issue in the schema file and verify the flow.)
 
-**Slide 2 — Kies je rol**
-- Title "Wie ben jij?".
-- Two large tappable cards: "🎧 Ik ben een Fan" and "🎤 Ik ben een Artiest", with the selected one highlighted in yellow.
-- Small helper text under the artist card ("Artiesten hebben nu nog een invite code nodig.") and under the fan card ("Je kunt later ook artiest worden.").
-- Yellow "Volgende" button bottom right.
+## Scope
+- Home stays unchanged for now (the "Playlists van de scene" section is skipped per your choice).
+- No changes to login, the music player engine, upload, play-tracking, or other screens.
+- New database tables for playlists are documented as SQL in code comments so you can run them in Supabase.
 
-**Slide 3 — Aan de slag**
-- Small yellow badge "PRE-ALPHA · VERSIE 0.1".
-- Title "Wees er bij." with subtitle explaining the app is in pre-alpha and they're one of the first users.
-- Large yellow "Registreren" button that finishes onboarding and opens the registration screen (pre-set to the role chosen on Slide 2).
-- A text button below: "Heb je al een account? Inloggen" that finishes onboarding and goes to the login screen.
-
-## Screens involved
-
-- New onboarding screen (the three slides above).
-- The app's launch flow is updated so it decides between showing onboarding or the login screen on startup.
-- Registration screen gets a small tweak so it can open with the chosen role already selected.
-- Brand copy for all slides added to the app's translation list (Dutch + English).
+## Design notes
+- Reuses existing square cover art, avatars, genre tags, founding badge, and press-animation styles for visual consistency.
+- Smooth chip switching, press feedback on rows, and a clean create-playlist sheet.

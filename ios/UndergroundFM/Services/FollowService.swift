@@ -16,6 +16,28 @@ final class FollowService {
 
     private nonisolated struct FollowRow: Decodable { let id: String }
 
+    /// Wrapper voor de embedded artist join op de follows-tabel.
+    private nonisolated struct FollowArtistRow: Decodable {
+        let artists: ArtistProfile?
+    }
+
+    /// Artiesten die de gebruiker volgt (nieuwste eerst).
+    func fetchFollowedArtists(userId: String) async throws -> [ArtistProfile] {
+        let token = SessionStore.shared.session?.accessToken
+        let rows: [FollowArtistRow] = try await sb.select(
+            FollowArtistRow.self,
+            from: "follows",
+            query: [
+                "user_id": "eq.\(userId)",
+                "select": "artists(*,users(is_founding_artist,display_name,avatar_url))",
+                "order": "created_at.desc",
+                "limit": "100"
+            ],
+            accessToken: token
+        )
+        return rows.compactMap { $0.artists }
+    }
+
     /// Volgt de huidige gebruiker deze artiest al?
     func isFollowing(artistId: String, userId: String) async throws -> Bool {
         let token = SessionStore.shared.session?.accessToken

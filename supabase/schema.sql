@@ -175,11 +175,14 @@ CREATE TABLE IF NOT EXISTS public.playlists (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
+  description TEXT,
   cover_url TEXT,
   is_public BOOLEAN NOT NULL DEFAULT FALSE,
   track_count INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+-- Bestaande projecten: voeg de description-kolom toe als die nog niet bestaat.
+ALTER TABLE public.playlists ADD COLUMN IF NOT EXISTS description TEXT;
 ALTER TABLE public.playlists ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "playlists_read" ON public.playlists;
 CREATE POLICY "playlists_read" ON public.playlists FOR SELECT USING (is_public = TRUE OR auth.uid() = user_id);
