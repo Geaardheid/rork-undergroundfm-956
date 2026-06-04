@@ -311,6 +311,24 @@ $;
 GRANT EXECUTE ON FUNCTION public.delete_current_user() TO authenticated;
 
 -- ─────────────────────────────────────────
+-- STORAGE: videoclips bucket
+-- ─────────────────────────────────────────
+-- Maak een publieke `clips` bucket aan (net als `tracks`) voor optionele videoclips.
+-- Pad-conventie: {artist_id}/{track_id}.mp4 — zelfde RLS-aanpak als tracks.
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('clips', 'clips', TRUE)
+ON CONFLICT (id) DO NOTHING;
+
+DROP POLICY IF EXISTS "clips_public_read" ON storage.objects;
+CREATE POLICY "clips_public_read" ON storage.objects
+  FOR SELECT USING (bucket_id = 'clips');
+
+DROP POLICY IF EXISTS "clips_artist_write" ON storage.objects;
+CREATE POLICY "clips_artist_write" ON storage.objects
+  FOR ALL USING (bucket_id = 'clips' AND auth.role() = 'authenticated')
+  WITH CHECK (bucket_id = 'clips' AND auth.role() = 'authenticated');
+
+-- ─────────────────────────────────────────
 -- Test invite codes (optioneel — verwijder na test)
 -- ─────────────────────────────────────────
 INSERT INTO public.invite_codes (code, is_active, max_uses)

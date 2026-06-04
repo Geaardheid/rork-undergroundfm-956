@@ -23,6 +23,9 @@ final class TrackUploadService {
         let description: String?
         let genreTags: [String]
         let explicit: Bool
+        /// Optionele videoclip (mp4/mov). Wordt geüpload naar de `clips` bucket.
+        var videoData: Data? = nil
+        var videoMimeType: String = "video/mp4"
     }
 
     /// Voert de volledige upload uit en returneert de aangemaakte Track.
@@ -63,8 +66,24 @@ final class TrackUploadService {
             }
         )
 
-        // Stap 3: Insert track row
-        onProgress(0.90, "Opslaan…")
+        // Stap 3 (optioneel): Upload videoclip naar de `clips` bucket.
+        var videoURL: String? = nil
+        if let videoData = input.videoData {
+            onProgress(0.90, "Uploaden videoclip…")
+            videoURL = try await sb.uploadToStorage(
+                bucket: "clips",
+                path: "\(artistId)/\(trackId).mp4",
+                data: videoData,
+                contentType: input.videoMimeType,
+                accessToken: accessToken,
+                onProgress: { fraction in
+                    onProgress(0.90 + fraction * 0.08, "Uploaden videoclip…")
+                }
+            )
+        }
+
+        // Stap 4: Insert track row
+        onProgress(0.98, "Opslaan…")
         let desc = input.description?.trimmingCharacters(in: .whitespacesAndNewlines)
         var values: [String: Any] = [
             "id": trackId,
@@ -81,6 +100,9 @@ final class TrackUploadService {
         ]
         if let desc = desc, !desc.isEmpty {
             values["description"] = String(desc.prefix(1000))
+        }
+        if let videoURL = videoURL {
+            values["video_url"] = videoURL
         }
 
         let inserted: [Track] = try await sb.insert(

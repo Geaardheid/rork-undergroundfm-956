@@ -13,6 +13,8 @@ struct TrackThumbnail: View {
     /// Toon een geanimeerde play/pause-overlay als deze track de huidige is.
     var isCurrent: Bool = false
     var isPlaying: Bool = false
+    /// Toon een 🎬 badge rechtsonder als de track een videoclip heeft.
+    var hasVideo: Bool = false
 
     var body: some View {
         Color(highlighted ? AppColors.yellow : AppColors.card)
@@ -36,10 +38,21 @@ struct TrackThumbnail: View {
             }
             .overlay { if isCurrent { playingOverlay } }
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .overlay(alignment: .bottomTrailing) { if hasVideo { videoBadge } }
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .stroke(isCurrent ? AppColors.yellow : (highlighted ? AppColors.yellow : AppColors.border), lineWidth: isCurrent ? 2 : 1)
             )
+    }
+
+    private var videoBadge: some View {
+        Text("🎬")
+            .font(.system(size: 11))
+            .padding(5)
+            .background(.black.opacity(0.6))
+            .clipShape(Circle())
+            .padding(6)
+            .allowsHitTesting(false)
     }
 
     private var playingOverlay: some View {

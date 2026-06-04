@@ -22,6 +22,9 @@ struct UploadTrackView: View {
     @State private var coverItem: PhotosPickerItem?
     @State private var coverImageData: Data?
 
+    // Video picker (optioneel)
+    @State private var videoData: Data?
+
     // Form fields
     @State private var title: String = ""
     @State private var description: String = ""
@@ -61,6 +64,7 @@ struct UploadTrackView: View {
                     header
                     audioPickerCard
                     coverPickerCard
+                    VideoPickerField(l10n: l10n, videoData: $videoData)
                     titleField
                     descriptionField
                     genrePicker
@@ -369,7 +373,9 @@ struct UploadTrackView: View {
             title: title,
             description: description.isEmpty ? nil : description,
             genreTags: Array(selectedGenres),
-            explicit: isExplicit
+            explicit: isExplicit,
+            videoData: videoData,
+            videoMimeType: "video/mp4"
         )
 
         do {
@@ -395,6 +401,7 @@ struct UploadTrackView: View {
         audioFileName = nil
         coverItem = nil
         coverImageData = nil
+        videoData = nil
         title = ""
         description = ""
         selectedGenres = []

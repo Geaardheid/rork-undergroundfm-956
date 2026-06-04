@@ -17,6 +17,11 @@ struct TrackCard: View {
 
     @State private var isPressed: Bool = false
 
+    private var hasVideo: Bool {
+        guard let v = track.videoUrl else { return false }
+        return !v.isEmpty
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
             Button(action: onTap) {
@@ -25,7 +30,8 @@ struct TrackCard: View {
                         url: track.thumbnailUrl,
                         highlighted: highlighted,
                         isCurrent: isCurrent,
-                        isPlaying: isPlaying
+                        isPlaying: isPlaying,
+                        hasVideo: hasVideo
                     )
                     .frame(width: width)
 

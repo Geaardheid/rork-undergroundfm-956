@@ -52,8 +52,8 @@ struct ProfileView: View {
                 UploadTrackView(l10n: l10n)
             }
             .sheet(item: $editingTrack) { track in
-                EditTrackSheet(track: track, l10n: l10n) { title, desc in
-                    Task { await vm.updateTrack(track, title: title, description: desc) }
+                EditTrackSheet(track: track, l10n: l10n) { title, desc, videoData in
+                    Task { await vm.updateTrack(track, title: title, description: desc, videoData: videoData) }
                 }
                 .presentationDetents([.medium])
                 .presentationBackground(AppColors.bg)

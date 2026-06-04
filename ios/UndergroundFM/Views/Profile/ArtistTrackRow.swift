@@ -11,9 +11,14 @@ struct ArtistTrackRow: View {
     let track: Track
     var isCurrent: Bool = false
 
+    private var hasVideo: Bool {
+        guard let v = track.videoUrl else { return false }
+        return !v.isEmpty
+    }
+
     var body: some View {
         HStack(spacing: AppSpacing.md) {
-            TrackThumbnail(url: track.thumbnailUrl, cornerRadius: AppRadius.sm)
+            TrackThumbnail(url: track.thumbnailUrl, cornerRadius: AppRadius.sm, hasVideo: hasVideo)
                 .frame(width: 72)
 
             VStack(alignment: .leading, spacing: 3) {
@@ -123,13 +128,19 @@ struct SwipeToDeleteRow<Content: View>: View {
 struct EditTrackSheet: View {
     let track: Track
     @Bindable var l10n: L10n
-    let onSave: (String, String) -> Void
+    let onSave: (String, String, Data?) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var title: String
     @State private var description: String
+    @State private var videoData: Data?
 
-    init(track: Track, l10n: L10n, onSave: @escaping (String, String) -> Void) {
+    private var hasExistingClip: Bool {
+        guard let v = track.videoUrl else { return false }
+        return !v.isEmpty
+    }
+
+    init(track: Track, l10n: L10n, onSave: @escaping (String, String, Data?) -> Void) {
         self.track = track
         self.l10n = l10n
         self.onSave = onSave
@@ -165,11 +176,13 @@ struct EditTrackSheet: View {
                         .foregroundStyle(AppColors.textPrimary)
                 }
 
+                VideoPickerField(l10n: l10n, hasExistingClip: hasExistingClip, videoData: $videoData)
+
                 PrimaryButton(
                     title: l10n.t("common.done"),
                     isDisabled: title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                 ) {
-                    onSave(title.trimmingCharacters(in: .whitespacesAndNewlines), description)
+                    onSave(title.trimmingCharacters(in: .whitespacesAndNewlines), description, videoData)
                     dismiss()
                 }
             }

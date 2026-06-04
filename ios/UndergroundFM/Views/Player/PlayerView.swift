@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import AVKit
 
 struct PlayerView: View {
     @Environment(\.dismiss) private var dismiss
@@ -40,7 +41,7 @@ struct PlayerView: View {
                     .padding(.top, AppSpacing.sm)
 
                 if selectedTab == .clip {
-                    clipPlaceholder
+                    clipContent
                 } else {
                     audioContent
                 }
@@ -349,6 +350,38 @@ struct PlayerView: View {
                     .foregroundStyle(isRepeat ? AppColors.yellow : AppColors.textSecond)
             }
             .buttonStyle(.plain)
+        }
+    }
+
+    // MARK: - Clip content
+
+    @ViewBuilder
+    private var clipContent: some View {
+        if let urlStr = player.currentTrack?.videoUrl, !urlStr.isEmpty, let url = URL(string: urlStr) {
+            VStack(spacing: AppSpacing.lg) {
+                Spacer()
+                ClipPlayerView(url: url)
+                    .aspectRatio(16.0 / 9.0, contentMode: .fit)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.black)
+                    .clipShape(RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
+                            .stroke(AppColors.border, lineWidth: 1)
+                    )
+                    .shadow(color: .black.opacity(0.6), radius: 20, y: 10)
+
+                if let title = player.currentTrack?.title {
+                    Text(title)
+                        .font(.system(size: AppFontSize.md, weight: .bold))
+                        .foregroundStyle(AppColors.textPrimary)
+                        .lineLimit(1)
+                }
+                Spacer()
+            }
+            .padding(.horizontal, AppSpacing.lg)
+        } else {
+            clipPlaceholder
         }
     }
 

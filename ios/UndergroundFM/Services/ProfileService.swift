@@ -81,6 +81,28 @@ final class ProfileService {
         )
     }
 
+    /// Upload (of vervang) een videoclip voor een bestaande track en sla de URL op.
+    func updateTrackVideo(track: Track, videoData: Data, mimeType: String) async throws -> String {
+        guard let token = SessionStore.shared.session?.accessToken else {
+            throw SupabaseError.message(L10n.shared.t("errors.unknown"))
+        }
+        let path = "\(track.artistId)/\(track.id).mp4"
+        let videoURL = try await sb.uploadToStorage(
+            bucket: "clips",
+            path: path,
+            data: videoData,
+            contentType: mimeType,
+            accessToken: token
+        )
+        try await sb.update(
+            table: "tracks",
+            query: ["id": "eq.\(track.id)"],
+            values: ["video_url": videoURL],
+            accessToken: token
+        )
+        return videoURL
+    }
+
     /// Verwijder een eigen track uit de database én bijbehorende storage-bestanden.
     func deleteTrack(_ track: Track) async throws {
         guard let token = SessionStore.shared.session?.accessToken else {
@@ -91,6 +113,10 @@ final class ProfileService {
             if let path = SupabaseService.storagePath(fromPublicURL: urlStr, bucket: "tracks") {
                 try? await sb.deleteFromStorage(bucket: "tracks", path: path, accessToken: token)
             }
+        }
+        if let videoUrl = track.videoUrl,
+           let path = SupabaseService.storagePath(fromPublicURL: videoUrl, bucket: "clips") {
+            try? await sb.deleteFromStorage(bucket: "clips", path: path, accessToken: token)
         }
         try await sb.delete(
             table: "tracks",

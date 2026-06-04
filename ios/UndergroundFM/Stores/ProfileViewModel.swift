@@ -65,15 +65,22 @@ final class ProfileViewModel {
         try? await ProfileService.shared.deleteTrack(track)
     }
 
-    func updateTrack(_ track: Track, title: String, description: String) async {
+    func updateTrack(_ track: Track, title: String, description: String, videoData: Data? = nil) async {
         try? await ProfileService.shared.updateTrack(trackId: track.id, title: title, description: description)
+
+        // Optioneel: upload (of vervang) de videoclip.
+        var newVideoUrl = track.videoUrl
+        if let videoData = videoData {
+            newVideoUrl = try? await ProfileService.shared.updateTrackVideo(track: track, videoData: videoData, mimeType: "video/mp4")
+        }
+
         if let idx = myTracks.firstIndex(where: { $0.id == track.id }) {
             // Lokale update zodat de UI direct klopt.
             let old = myTracks[idx]
             myTracks[idx] = Track(
                 id: old.id, artistId: old.artistId, title: title,
                 description: description.isEmpty ? nil : description,
-                audioUrl: old.audioUrl, videoUrl: old.videoUrl, thumbnailUrl: old.thumbnailUrl,
+                audioUrl: old.audioUrl, videoUrl: newVideoUrl ?? old.videoUrl, thumbnailUrl: old.thumbnailUrl,
                 duration: old.duration, streamCount: old.streamCount, likeCount: old.likeCount,
                 genreTags: old.genreTags, explicit: old.explicit, status: old.status,
                 weightedMinutesTotal: old.weightedMinutesTotal, createdAt: old.createdAt, artists: old.artists
