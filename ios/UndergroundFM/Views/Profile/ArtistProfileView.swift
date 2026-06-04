@@ -131,7 +131,10 @@ struct ArtistProfileView: View {
                         Button {
                             MusicPlayer.shared.load(track: track)
                         } label: {
-                            ArtistTrackRow(track: track)
+                            ArtistTrackRow(
+                                track: track,
+                                isCurrent: MusicPlayer.shared.currentTrack?.id == track.id
+                            )
                         }
                         .buttonStyle(PressableScaleStyle())
                     }

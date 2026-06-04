@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ArtistTrackRow: View {
     let track: Track
+    var isCurrent: Bool = false
 
     var body: some View {
         HStack(spacing: AppSpacing.md) {
@@ -41,7 +42,14 @@ struct ArtistTrackRow: View {
         }
         .padding(AppSpacing.sm)
         .frame(maxWidth: .infinity)
-        .background(AppColors.card)
+        .background(isCurrent ? AppColors.yellow.opacity(0.08) : AppColors.card)
+        .overlay(alignment: .leading) {
+            if isCurrent {
+                AppColors.yellow
+                    .frame(width: 4)
+                    .clipShape(.rect(cornerRadius: 2))
+            }
+        }
         .clipShape(.rect(cornerRadius: AppRadius.md))
         .contentShape(Rectangle())
     }

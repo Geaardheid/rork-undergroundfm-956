@@ -97,7 +97,7 @@ struct MiniPlayerView: View {
                     switch phase {
                     case .success(let img):
                         img.resizable()
-                            .aspectRatio(contentMode: .fill)
+                            .aspectRatio(1, contentMode: .fill)
                     default:
                         fallbackArtwork
                     }
@@ -107,6 +107,7 @@ struct MiniPlayerView: View {
             }
         }
         .frame(width: 40, height: 40)
+        .clipped()
         .clipShape(RoundedRectangle(cornerRadius: AppRadius.sm, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: AppRadius.sm, style: .continuous)

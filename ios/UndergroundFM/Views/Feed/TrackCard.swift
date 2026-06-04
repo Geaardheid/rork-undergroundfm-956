@@ -70,7 +70,7 @@ struct TrackCardSkeleton: View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
             RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
                 .fill(AppColors.card)
-                .aspectRatio(16.0/9.0, contentMode: .fit)
+                .aspectRatio(1, contentMode: .fit)
                 .frame(width: width)
                 .opacity(pulse ? 0.6 : 1.0)
 

@@ -282,6 +282,9 @@ final class MusicPlayer {
         info[MPMediaItemPropertyPlaybackDuration] = duration
         info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = currentTime
         info[MPNowPlayingInfoPropertyPlaybackRate] = isPlaying ? 1.0 : 0.0
+        if track.explicit {
+            info[MPMediaItemPropertyIsExplicit] = true
+        }
         MPNowPlayingInfoCenter.default().nowPlayingInfo = info
     }
 

@@ -5,7 +5,7 @@
 
 import SwiftUI
 
-/// 16:9 thumbnail met fallback (gele highlight optie zoals in mockup).
+/// Square 1:1 thumbnail met fallback (gele highlight optie zoals in mockup).
 struct TrackThumbnail: View {
     let url: String?
     var highlighted: Bool = false
@@ -13,14 +13,15 @@ struct TrackThumbnail: View {
 
     var body: some View {
         Color(highlighted ? AppColors.yellow : AppColors.card)
-            .aspectRatio(16.0/9.0, contentMode: .fit)
+            .aspectRatio(1, contentMode: .fit)
             .overlay {
                 if let urlStr = url, let u = URL(string: urlStr) {
                     AsyncImage(url: u) { phase in
                         switch phase {
                         case .success(let img):
                             img.resizable()
-                                .aspectRatio(contentMode: .fill)
+                                .aspectRatio(1, contentMode: .fill)
+                                .clipped()
                                 .allowsHitTesting(false)
                         default:
                             placeholderIcon
