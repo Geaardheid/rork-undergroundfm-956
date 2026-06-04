@@ -12,6 +12,7 @@ struct GenreRow: View {
     var onSelectTrack: (Track) -> Void = { _ in }
     var onSelectArtist: (Track) -> Void = { _ in }
     var onRetry: () -> Void = {}
+    var onSeeAll: () -> Void = {}
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
@@ -26,7 +27,7 @@ struct GenreRow: View {
                         .tracking(0.5)
                 }
                 Spacer()
-                Button(action: {}) {
+                Button(action: onSeeAll) {
                     HStack(spacing: 4) {
                         Text(l10n.t("feed.seeAll"))
                             .font(.system(size: AppFontSize.sm, weight: .semibold))
@@ -85,10 +86,10 @@ struct GenreRow: View {
 
     private var emptyState: some View {
         HStack(spacing: AppSpacing.sm) {
-            Image(systemName: "music.note.list")
+            Image(systemName: "music.note")
                 .font(.system(size: 16))
                 .foregroundStyle(AppColors.textMuted)
-            Text(l10n.t("feed.empty"))
+            Text(l10n.t("feed.emptyGenre"))
                 .font(.system(size: AppFontSize.sm, weight: .medium))
                 .foregroundStyle(AppColors.textMuted)
         }

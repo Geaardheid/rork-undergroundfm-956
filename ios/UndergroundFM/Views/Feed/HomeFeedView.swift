@@ -17,6 +17,9 @@ struct HomeFeedView: View {
                 .navigationDestination(for: ArtistRoute.self) { route in
                     ArtistProfileView(route: route, l10n: l10n)
                 }
+                .navigationDestination(for: GenreSection.self) { section in
+                    GenreDetailView(section: section, l10n: l10n)
+                }
                 .toolbar(.hidden, for: .navigationBar)
         }
     }
@@ -46,7 +49,8 @@ struct HomeFeedView: View {
                         onSelectArtist: { track in
                             path.append(ArtistRoute(artistId: track.artistId, artistName: track.artistName))
                         },
-                        onRetry: { Task { await feed.load(section: section) } }
+                        onRetry: { Task { await feed.load(section: section) } },
+                        onSeeAll: { path.append(section) }
                     )
                 }
 
