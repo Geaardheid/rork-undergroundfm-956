@@ -74,6 +74,35 @@ final class SearchService {
         )
     }
 
+    /// Recent toegevoegde artiesten (created_at desc) — voor de discover-strook.
+    func newArtists(limit: Int = 12) async throws -> [ArtistSearchResult] {
+        return try await sb.select(
+            ArtistSearchResult.self,
+            from: "artists",
+            query: [
+                "select": "id,artist_name,genre_tags,users(is_founding_artist,display_name,avatar_url)",
+                "order": "created_at.desc",
+                "limit": "\(limit)"
+            ],
+            accessToken: SessionStore.shared.session?.accessToken
+        )
+    }
+
+    /// Recent geüploade live tracks (created_at desc).
+    func recentUploads(limit: Int = 12) async throws -> [Track] {
+        return try await sb.select(
+            Track.self,
+            from: "tracks",
+            query: [
+                "select": "*,artists(artist_name)",
+                "status": "eq.live",
+                "order": "created_at.desc",
+                "limit": "\(limit)"
+            ],
+            accessToken: SessionStore.shared.session?.accessToken
+        )
+    }
+
     /// Zoek live tracks op titel (ilike).
     func searchTracks(_ term: String) async throws -> [Track] {
         let pattern = "ilike.*\(escape(term))*"

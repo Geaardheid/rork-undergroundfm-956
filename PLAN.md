@@ -1,19 +1,17 @@
-# Redesign the search empty state with floating covers + genre tiles
+# Search empty state — Spotify-inspired Underground FM discover
 
 ## Overview
-Give the search screen a bold Underground FM look before you start typing, while keeping all existing search behaviour exactly as-is.
+A packed, scrollable discover screen on the search tab before typing, in Underground FM black/yellow. All existing search behaviour stays exactly as-is.
 
 ## Empty state (before typing)
-- **Floating cover wall** — Show 5 of the most-played track covers from the catalogue, scattered across the upper half of the screen. Each cover is medium-sized (120×120), slightly rotated at a random angle (between -8° and +8°), overlapping its neighbours, with a strong yellow glow behind it for that signature Underground FM energy.
-- These load quietly in the background; if none are available yet, the area simply stays empty (no error).
+- **Floating cover strip** — 3 skewed covers (110×110) in a horizontal strip at the top with yellow glow. Below them the current track title (bold white) + artist (yellow) crossfade between covers every few seconds. Covers are tappable → play the track.
+- **Verken genres** — 2-column grid of rectangular tiles. Each tile has a dark gradient with a per-genre colour tint (Rap red, Drill blue, Afro green, Trap purple, R&B orange, House teal), the most-played track cover as a background image with dark overlay, genre name bold white top-left, emoji large bottom-right, rounded corners. Tapping opens the genre track list.
+- **⚡ Nieuwe artiesten** — horizontal scroll of recently joined artists (round avatar, name, founding badge).
+- **🔥 Recent geüpload** — horizontal scroll of recently uploaded tracks (square cover, title, artist).
+- No empty space; the screen scrolls and feels full.
 
-- **Genre tiles** — Below the covers, a 2-column grid of large square tiles. Each tile has a dark background, a yellow border, and a big genre emoji above a bold white genre name, centred. The genres match the app's existing home feed set (🔥 Rap, ⚡ Drill, 🌍 Afro, 💎 Trap, 🎵 R&B, 🏠 House).
-- Tapping a tile opens that genre's full track list (the same genre list screen already used from Home), with a back button to return to search.
-- The whole empty state scrolls so the tiles are always reachable.
-
-## Search results (while typing) — visual polish only
-- **Track rows** — Prominent square cover art, bold title, artist name shown in yellow, and a play-count badge. Tapping plays the track (unchanged).
-- **Artist rows** — Large round avatar, bold name, genre tags, and a founding-artist star badge when applicable (unchanged behaviour, refined look).
+## Search results (while typing) — unchanged
+- Track rows and artist rows keep their existing look and behaviour.
 
 ## Out of scope (left untouched)
-- Search logic, the music player, sign-in/auth, and every other screen stay exactly as they are.
+- Search logic, the music player, sign-in/auth, and every other screen.

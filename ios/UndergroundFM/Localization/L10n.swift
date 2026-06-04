@@ -242,6 +242,8 @@ final class L10n {
         "search.artists": "Artiesten",
         "search.tracks": "Tracks",
         "search.browseGenres": "Verken genres",
+        "search.newArtists": "Nieuwe artiesten",
+        "search.recentUploads": "Recent geüpload",
 
         "library.tracks": "Tracks",
         "library.artists": "Artiesten",
@@ -447,6 +449,8 @@ final class L10n {
         "search.artists": "Artists",
         "search.tracks": "Tracks",
         "search.browseGenres": "Browse genres",
+        "search.newArtists": "New artists",
+        "search.recentUploads": "Recently uploaded",
 
         "library.tracks": "Tracks",
         "library.artists": "Artists",
@@ -637,6 +641,8 @@ final class L10n {
         "search.artists": "Artistas",
         "search.tracks": "Tracks",
         "search.browseGenres": "Explora géneros",
+        "search.newArtists": "Nuevos artistas",
+        "search.recentUploads": "Subido recientemente",
 
         "library.tracks": "Tracks",
         "library.artists": "Artistas",
