@@ -28,19 +28,23 @@ final class FeedStore {
         sections[sectionId] ?? .idle
     }
 
+    /// Laadt featured + alle secties sequentieel (geen gelijktijdige task-cancellation).
+    /// Bestaande data blijft zichtbaar tot nieuwe data succesvol binnen is.
     func loadAll() async {
         await loadFeatured()
-        await withTaskGroup(of: Void.self) { group in
-            for section in GenreSection.all {
-                group.addTask { @MainActor in
-                    await self.load(section: section)
-                }
-            }
+        for section in GenreSection.all {
+            await load(section: section)
+            // Kleine adempauze zodat opeenvolgende fetches elkaar niet verdringen.
+            try? await Task.sleep(for: .milliseconds(80))
         }
     }
 
     func load(section: GenreSection) async {
-        sections[section.id] = .loading
+        // Alleen de loading-spinner tonen als er nog geen data is.
+        // Heeft de sectie al data, dan blijft die staan tijdens de refresh.
+        if !hasData(for: section.id) {
+            sections[section.id] = .loading
+        }
         do {
             let tracks = try await service.fetchTracks(
                 genre: section.genre,
@@ -49,8 +53,19 @@ final class FeedStore {
             )
             sections[section.id] = .loaded(tracks)
         } catch {
-            sections[section.id] = .error(error.localizedDescription)
+            // Bewaar bestaande data bij een fout (bv. refresh-cancellatie):
+            // toon alleen de error-staat als er niets te tonen valt.
+            if !hasData(for: section.id) {
+                sections[section.id] = .error(error.localizedDescription)
+            }
         }
+    }
+
+    private func hasData(for sectionId: String) -> Bool {
+        if case .loaded(let tracks) = sections[sectionId], !tracks.isEmpty {
+            return true
+        }
+        return false
     }
 
     func loadFeatured() async {
