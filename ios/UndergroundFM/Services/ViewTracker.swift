@@ -143,5 +143,26 @@ final class ViewTracker {
         req.httpBody = try? JSONSerialization.data(withJSONObject: body)
 
         _ = try? await URLSession.shared.data(for: req)
+
+        // Verhoog daarna de afspeelteller van de track (atomair via RPC).
+        await incrementStreamCount(trackId: trackId)
+    }
+
+    /// Verhoogt de afspeelteller van de track via de Supabase RPC.
+    private nonisolated func incrementStreamCount(trackId: String) async {
+        let url = SupabaseConfig.url
+        let anonKey = SupabaseConfig.anonKey
+        guard !url.isEmpty, !anonKey.isEmpty else { return }
+        guard let endpoint = URL(string: "\(url)/rest/v1/rpc/increment_stream_count") else { return }
+
+        let body: [String: Any] = ["track_id_input": trackId]
+        var req = URLRequest(url: endpoint)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue(anonKey, forHTTPHeaderField: "apikey")
+        req.setValue("return=minimal", forHTTPHeaderField: "Prefer")
+        req.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        _ = try? await URLSession.shared.data(for: req)
     }
 }

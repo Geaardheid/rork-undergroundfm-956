@@ -272,6 +272,25 @@ DROP POLICY IF EXISTS "likes_own_delete" ON public.likes;
 CREATE POLICY "likes_own_delete" ON public.likes FOR DELETE USING (auth.uid() = user_id);
 
 -- ─────────────────────────────────────────
+-- RPC: increment_stream_count
+-- Verhoogt de afspeelteller atomair. SECURITY DEFINER zodat ook anonieme
+-- luisteraars (ViewTracker post met alleen apikey) de teller mogen ophogen,
+-- ondanks de tracks RLS die alleen de eigenaar laat schrijven.
+-- ─────────────────────────────────────────
+CREATE OR REPLACE FUNCTION public.increment_stream_count(track_id_input UUID)
+RETURNS void
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $
+  UPDATE public.tracks
+     SET stream_count = stream_count + 1
+   WHERE id = track_id_input;
+$;
+
+GRANT EXECUTE ON FUNCTION public.increment_stream_count(UUID) TO anon, authenticated;
+
+-- ─────────────────────────────────────────
 -- Test invite codes (optioneel — verwijder na test)
 -- ─────────────────────────────────────────
 INSERT INTO public.invite_codes (code, is_active, max_uses)

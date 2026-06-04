@@ -38,6 +38,7 @@ struct MainTabView: View {
     @Bindable var l10n: L10n
     @State private var selected: AppTab = .home
     @State private var showFullPlayer: Bool = false
+    @State private var artistRoute: ArtistRoute?
 
     private var visibleTabs: [AppTab] {
         let isArtist = auth.currentUser?.role == .artist
@@ -62,9 +63,31 @@ struct MainTabView: View {
             }
         }
         .sheet(isPresented: $showFullPlayer) {
-            PlayerView()
-                .presentationDetents([.large])
-                .presentationBackground(AppColors.bg)
+            PlayerView(l10n: l10n, onTapArtist: { route in
+                showFullPlayer = false
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                    artistRoute = route
+                }
+            })
+            .presentationDetents([.large])
+            .presentationBackground(.black)
+        }
+        .sheet(item: $artistRoute) { route in
+            NavigationStack {
+                ArtistProfileView(route: route, l10n: l10n)
+                    .toolbar {
+                        ToolbarItem(placement: .topBarLeading) {
+                            Button {
+                                artistRoute = nil
+                            } label: {
+                                Image(systemName: "chevron.down")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundStyle(AppColors.textPrimary)
+                            }
+                        }
+                    }
+            }
+            .presentationBackground(AppColors.bg)
         }
     }
 

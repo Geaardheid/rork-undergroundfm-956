@@ -10,6 +10,9 @@ struct TrackThumbnail: View {
     let url: String?
     var highlighted: Bool = false
     var cornerRadius: CGFloat = AppRadius.md
+    /// Toon een geanimeerde play/pause-overlay als deze track de huidige is.
+    var isCurrent: Bool = false
+    var isPlaying: Bool = false
 
     var body: some View {
         Color(highlighted ? AppColors.yellow : AppColors.card)
@@ -31,16 +34,63 @@ struct TrackThumbnail: View {
                     placeholderIcon
                 }
             }
+            .overlay { if isCurrent { playingOverlay } }
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .stroke(highlighted ? AppColors.yellow : AppColors.border, lineWidth: 1)
+                    .stroke(isCurrent ? AppColors.yellow : (highlighted ? AppColors.yellow : AppColors.border), lineWidth: isCurrent ? 2 : 1)
             )
+    }
+
+    private var playingOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.45)
+            PlayingIndicator(isPlaying: isPlaying)
+        }
+        .allowsHitTesting(false)
     }
 
     private var placeholderIcon: some View {
         Image(systemName: "music.note")
             .font(.system(size: 24, weight: .bold))
             .foregroundStyle(highlighted ? AppColors.yellowText.opacity(0.5) : AppColors.textMuted)
+    }
+}
+
+/// Toont een geanimeerde equalizer als de track speelt, of een pauze-icoon.
+struct PlayingIndicator: View {
+    let isPlaying: Bool
+    @State private var animate: Bool = false
+
+    var body: some View {
+        Group {
+            if isPlaying {
+                HStack(spacing: 3) {
+                    ForEach(0..<4, id: \.self) { i in
+                        Capsule()
+                            .fill(AppColors.yellow)
+                            .frame(width: 4, height: animate ? barHeight(i) : 6)
+                            .animation(
+                                .easeInOut(duration: 0.45)
+                                    .repeatForever()
+                                    .delay(Double(i) * 0.12),
+                                value: animate
+                            )
+                    }
+                }
+                .frame(height: 26, alignment: .center)
+                .onAppear { animate = true }
+            } else {
+                Image(systemName: "pause.fill")
+                    .font(.system(size: 26, weight: .black))
+                    .foregroundStyle(AppColors.yellow)
+            }
+        }
+        .shadow(color: .black.opacity(0.5), radius: 4)
+    }
+
+    private func barHeight(_ index: Int) -> CGFloat {
+        let heights: [CGFloat] = [22, 14, 26, 18]
+        return heights[index % heights.count]
     }
 }

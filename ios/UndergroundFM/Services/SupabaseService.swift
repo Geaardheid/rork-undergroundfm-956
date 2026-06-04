@@ -242,6 +242,23 @@ nonisolated final class SupabaseService: @unchecked Sendable {
         try Self.assertOK(resp, data: data)
     }
 
+    /// Roep een Postgres RPC (stored function) aan via PostgREST.
+    func rpc(
+        _ function: String,
+        params: [String: Any],
+        accessToken: String? = nil
+    ) async throws {
+        let req = try restRequest(
+            path: "rpc/\(function)",
+            method: "POST",
+            accessToken: accessToken,
+            body: params,
+            prefer: "return=minimal"
+        )
+        let (data, resp) = try await session.data(for: req)
+        try Self.assertOK(resp, data: data)
+    }
+
     // MARK: - Storage
 
     /// Verwijder een object uit een Supabase Storage bucket.

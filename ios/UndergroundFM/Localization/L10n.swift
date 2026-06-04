@@ -156,6 +156,12 @@ final class L10n {
         "upload.successMessage": "Je track staat live op UndergroundFM.",
 
         "player.noTrack": "Geen nummer geselecteerd",
+        "player.audio": "Audio",
+        "player.clip": "Clip",
+        "player.clipSoon": "Clip komt binnenkort",
+        "player.clipSoonSub": "Video's worden binnenkort toegevoegd.",
+        "player.plays": "plays",
+        "player.shareText": "Luister naar %@ van %@ op UndergroundFM",
 
         "profile.settings": "Instellingen",
         "profile.notifications": "Meldingen",
@@ -275,6 +281,12 @@ final class L10n {
         "upload.successMessage": "Your track is live on UndergroundFM.",
 
         "player.noTrack": "No track selected",
+        "player.audio": "Audio",
+        "player.clip": "Clip",
+        "player.clipSoon": "Clip coming soon",
+        "player.clipSoonSub": "Videos will be added soon.",
+        "player.plays": "plays",
+        "player.shareText": "Listen to %@ by %@ on UndergroundFM",
 
         "profile.settings": "Settings",
         "profile.notifications": "Notifications",
@@ -394,6 +406,12 @@ final class L10n {
         "upload.successMessage": "Tu track está en vivo en UndergroundFM.",
 
         "player.noTrack": "Ninguna pista seleccionada",
+        "player.audio": "Audio",
+        "player.clip": "Clip",
+        "player.clipSoon": "Clip próximamente",
+        "player.clipSoonSub": "Pronto se añadirán los vídeos.",
+        "player.plays": "reproducciones",
+        "player.shareText": "Escucha %@ de %@ en UndergroundFM",
 
         "profile.settings": "Ajustes",
         "profile.notifications": "Notificaciones",

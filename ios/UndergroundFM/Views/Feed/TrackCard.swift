@@ -9,6 +9,8 @@ struct TrackCard: View {
     let track: Track
     var highlighted: Bool = false
     var width: CGFloat = 150
+    var isCurrent: Bool = false
+    var isPlaying: Bool = false
     var onTap: () -> Void = {}
     /// Optioneel: tik op de artiestennaam → navigeer naar publiek profiel.
     var onTapArtist: (() -> Void)? = nil
@@ -19,14 +21,21 @@ struct TrackCard: View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
             Button(action: onTap) {
                 VStack(alignment: .leading, spacing: AppSpacing.sm) {
-                    TrackThumbnail(url: track.thumbnailUrl, highlighted: highlighted)
-                        .frame(width: width)
+                    TrackThumbnail(
+                        url: track.thumbnailUrl,
+                        highlighted: highlighted,
+                        isCurrent: isCurrent,
+                        isPlaying: isPlaying
+                    )
+                    .frame(width: width)
 
                     Text(track.title)
                         .font(.system(size: AppFontSize.base, weight: .bold))
                         .foregroundStyle(AppColors.textPrimary)
                         .lineLimit(1)
                         .frame(width: width, alignment: .leading)
+
+                    playCountLabel
                 }
             }
             .buttonStyle(.plain)
@@ -38,6 +47,17 @@ struct TrackCard: View {
 
             artistName
         }
+        .frame(width: width, alignment: .leading)
+    }
+
+    private var playCountLabel: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "play.fill")
+                .font(.system(size: 9, weight: .black))
+            Text(formatCount(track.streamCount))
+                .font(.system(size: AppFontSize.xs, weight: .semibold))
+        }
+        .foregroundStyle(AppColors.textMuted)
         .frame(width: width, alignment: .leading)
     }
 

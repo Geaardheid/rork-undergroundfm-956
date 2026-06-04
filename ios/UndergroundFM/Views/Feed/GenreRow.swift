@@ -65,7 +65,9 @@ struct GenreRow: View {
                             TrackCard(
                                 track: track,
                                 highlighted: idx == 0,
-                                width: 150,
+                                width: 132,
+                                isCurrent: MusicPlayer.shared.currentTrack?.id == track.id,
+                                isPlaying: MusicPlayer.shared.isPlaying,
                                 onTap: { onSelectTrack(track) },
                                 onTapArtist: { onSelectArtist(track) }
                             )

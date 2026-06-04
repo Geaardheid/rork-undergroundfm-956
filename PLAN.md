@@ -1,42 +1,28 @@
-# Rework profile screens + tappable public artist profiles
+# Spotify-style full player, richer feed cards, and live play counts
 
-## What I'll build
+## Full player redesign (Spotify-style)
 
-A complete redesign of the profile area, plus a brand-new public artist page that fans can open by tapping an artist's name anywhere in the app. Everything uses the existing black + neon-yellow design system.
+- **Pure black background** with a large square cover art, centered, rounded corners and a soft drop shadow.
+- **Track title** (bold white) with the **artist name** below in yellow — tapping the artist name closes the player and opens that artist's public profile page.
+- **Action row** under the title: a heart "like" button on the left, an explicit 🅴 badge in the middle when the track is explicit, and a share button on the right that opens the native iOS share sheet with the track title and artist.
+- **Yellow scrubber bar** with the current time on the left and total time on the right.
+- **Controls row**: shuffle, previous, a large yellow circular play/pause button, next, and repeat. (Shuffle and repeat are visual toggles for now; previous/next/play/pause stay wired to existing playback.)
+- **Tab switch at the top**: "🎧 Audio" and "🎬 Clip". The Clip tab only appears when the track has a video. Tapping Clip shows a "Clip komt binnenkort" coming-soon message (video playback wired up later).
+- **Chevron-down** at the top to dismiss the player.
 
-### Database (you run this in Supabase)
-- I'll add SQL for the `view_events` table (so stats work) and confirm the `follows` table, so you can paste it into the SQL Editor in one go.
+## Feed card improvements
 
-### Fan profile (your own, as a listener)
-- Large avatar circle with your initials or photo, tappable to change photo (picker UI now — actual upload comes later).
-- Display name with email underneath.
-- Subscription badge: green "Premium actief" or red "Geen abonnement".
-- "Gelikte tracks" — a horizontal scroll row of tracks you've liked; tap to play.
-- "Instellingen" — language selector plus a notifications on/off toggle that's remembered.
-- "Uitloggen" button at the bottom, styled in red as a danger action.
+- Cover art in the trending/genre rows made **slightly smaller** for a tighter, more polished layout.
+- When a track is the one currently playing, show an **animated play/pause icon overlay** on its cover art so users can see what's active at a glance.
 
-### Artist profile (your own, when you're an artist)
-- Same avatar + name, plus a yellow "Founding Artist" badge when that applies.
-- Editable bio (tap to edit, max 280 characters, saved to your artist profile).
-- Three stat cards for this month: "Actieve supporters" (unique listeners), "Scene punten" (your total score), and "Underground ranking" (your position vs other artists, e.g. "#3 in de scene").
-- "Mijn tracks" — your uploaded tracks with title, play count and length. Swipe a track to delete it (removed from the library and storage). Tap a track to edit its title and description.
-- "Upload nieuwe track" button linking to the upload screen.
+## Live play counts
 
-### Public artist page (what fans see)
-- Avatar, artist name, bio, and genre tags.
-- Founding Artist badge when applicable.
-- The same three monthly stat cards (supporters, scene punten, ranking).
-- A "Volgen" button that follows the artist (saved so it stays followed).
-- A list of all the artist's live tracks — tap any to start playing.
+- Each time a listening session is saved, the track's play count is **incremented** in the database (reusing the existing count field).
+- The actual play count is shown on **feed cards and in the player**, formatted nicely (e.g. "1.2K" for numbers above a thousand).
+- A small play-count badge appears on cards and in the player metadata.
 
-### Tappable artist names
-- Artist names on track cards in the home feed become tappable and open that artist's public page.
+## Notes
 
-### Design & feel
-- Dark `#0A0A0A` background, `#181818` cards, neon-yellow accents, white text — matching the rest of the app.
-- Stat cards use bold numbers with subtle labels; smooth press animations on buttons and the follow toggle; clean empty states ("Nog geen tracks", "Nog geen likes").
-- Loading skeletons while stats and tracks load.
+- Playback engine, login, uploads, and listening-session tracking behavior stay exactly as they are — only the count increment is added on top of the existing save step.
+- App icon already exists; no icon work needed.
 
-### Notes
-- I won't touch the login flow, the music player, listening tracking, or the upload logic.
-- Ranking is computed by fetching this month's listening data and ranking on-device — accurate enough for now and easy to upgrade later.
