@@ -347,16 +347,20 @@ private struct SearchDiscoverView: View {
 
     var body: some View {
         ScrollView(showsIndicators: false) {
-            VStack(spacing: AppSpacing.xl) {
+            VStack(spacing: AppSpacing.sm) {
                 FloatingCoverWall(tracks: covers)
-                    .frame(height: 260)
+                    .frame(height: 300)
                     .frame(maxWidth: .infinity)
 
                 VStack(alignment: .leading, spacing: AppSpacing.md) {
-                    Text(l10n.t("search.browseGenres"))
-                        .font(.system(size: AppFontSize.md, weight: .black))
-                        .foregroundStyle(AppColors.textPrimary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    HStack(spacing: 6) {
+                        Text("\u{26A1}")
+                            .font(.system(size: 18, weight: .black))
+                        Text(l10n.t("search.browseGenres").uppercased())
+                            .font(.system(size: 18, weight: .black))
+                            .foregroundStyle(AppColors.yellow)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
                     LazyVGrid(columns: columns, spacing: AppSpacing.md) {
                         ForEach(GenreSection.all) { section in
@@ -371,7 +375,7 @@ private struct SearchDiscoverView: View {
 
                 Color.clear.frame(height: 100)
             }
-            .padding(.top, AppSpacing.md)
+            .padding(.top, AppSpacing.sm)
         }
     }
 
@@ -387,13 +391,13 @@ private struct SearchDiscoverView: View {
 private struct FloatingCoverWall: View {
     let tracks: [Track]
 
-    /// Vaste posities (relatief), rotaties en z-volgorde voor maximaal 5 covers.
+    /// Vaste posities (relatief), rotaties en z-volgorde voor maximaal 5 covers — breder verspreid.
     private let layout: [(x: CGFloat, y: CGFloat, angle: Double)] = [
-        (0.50, 0.34, -6),
-        (0.20, 0.22,  7),
-        (0.80, 0.26, -8),
-        (0.32, 0.66,  5),
-        (0.70, 0.70, -4)
+        (0.50, 0.40, -6),
+        (0.14, 0.24,  7),
+        (0.86, 0.28, -8),
+        (0.26, 0.74,  5),
+        (0.78, 0.72, -4)
     ]
 
     var body: some View {
@@ -418,7 +422,7 @@ private struct FloatingCover: View {
 
     var body: some View {
         Color(AppColors.card)
-            .frame(width: 120, height: 120)
+            .frame(width: 150, height: 150)
             .overlay {
                 if let urlStr = url, let u = URL(string: urlStr) {
                     AsyncImage(url: u) { phase in
@@ -440,7 +444,7 @@ private struct FloatingCover: View {
                 RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
                     .stroke(AppColors.yellow.opacity(0.5), lineWidth: 1.5)
             )
-            .shadow(color: AppColors.yellow.opacity(0.6), radius: 20)
+            .shadow(color: AppColors.yellow.opacity(0.8), radius: 30)
             .scaleEffect(appeared ? 1 : 0.7)
             .opacity(appeared ? 1 : 0)
             .onAppear {
@@ -464,17 +468,24 @@ private struct GenreTile: View {
     var body: some View {
         VStack(spacing: AppSpacing.sm) {
             Text(emoji)
-                .font(.system(size: 34))
+                .font(.system(size: 40))
             Text(name)
-                .font(.system(size: AppFontSize.md, weight: .black))
-                .foregroundStyle(AppColors.textPrimary)
+                .font(.system(size: 15, weight: .bold))
+                .foregroundStyle(.white)
         }
         .frame(maxWidth: .infinity)
-        .aspectRatio(1.4, contentMode: .fit)
-        .background(AppColors.headerBg)
+        .aspectRatio(1.1, contentMode: .fit)
+        .background(Color(red: 0.102, green: 0.102, blue: 0.102))
+        .overlay(
+            LinearGradient(
+                colors: [.clear, AppColors.yellow.opacity(0.18)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
         .overlay(
             RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
-                .stroke(AppColors.yellow.opacity(0.6), lineWidth: 1.5)
+                .stroke(AppColors.yellow, lineWidth: 1.5)
         )
         .clipShape(.rect(cornerRadius: AppRadius.lg))
     }
