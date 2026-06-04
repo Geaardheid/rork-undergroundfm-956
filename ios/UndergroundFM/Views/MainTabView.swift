@@ -12,7 +12,17 @@ enum AppTab: String, CaseIterable, Identifiable {
     case home, discover, upload, library, profile
     var id: String { rawValue }
 
-    var icon: String {
+    var inactiveIcon: String {
+        switch self {
+        case .home:     return "house"
+        case .discover: return "sparkles"
+        case .upload:   return "plus.circle"
+        case .library:  return "music.note.list"
+        case .profile:  return "person"
+        }
+    }
+
+    var activeIcon: String {
         switch self {
         case .home:     return "house.fill"
         case .discover: return "sparkles"
@@ -124,16 +134,12 @@ struct MainTabView: View {
             }
         }
         .padding(.horizontal, AppSpacing.sm)
-        .padding(.top, 10)
-        .padding(.bottom, 8)
+        .padding(.top, 8)
+        .padding(.bottom, 6)
         .background(
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .fill(Color.black)
+            Color.black
+                .ignoresSafeArea(.all, edges: .bottom)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .shadow(color: Color.black.opacity(0.5), radius: 16, x: 0, y: 6)
-        .padding(.horizontal, AppSpacing.lg)
-        .padding(.bottom, AppSpacing.sm)
     }
 }
 
@@ -144,30 +150,24 @@ private struct TabButton: View {
     let namespace: Namespace.ID
     let action: () -> Void
 
-    private static let inactiveColor = Color(hex: 0x555555)
+    private static let inactiveColor = Color(hex: 0x444444)
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 4) {
-                Image(systemName: tab.icon)
-                    .font(.system(size: 22, weight: .semibold))
-                Text(label)
-                    .font(.system(size: 10, weight: .bold))
-                    .lineLimit(1)
+            VStack(spacing: 5) {
+                // Active-tab indicator line above the icon
+                Capsule()
+                    .fill(isSelected ? AppColors.yellow : Color.clear)
+                    .frame(width: 16, height: 3)
+                    .matchedGeometryEffect(id: "tabIndicator", in: namespace, isSource: isSelected)
 
-                // Active-tab indicator dot
-                ZStack {
-                    if isSelected {
-                        Circle()
-                            .fill(AppColors.yellow)
-                            .frame(width: 5, height: 5)
-                            .matchedGeometryEffect(id: "tabDot", in: namespace)
-                    } else {
-                        Circle()
-                            .fill(Color.clear)
-                            .frame(width: 5, height: 5)
-                    }
-                }
+                Image(systemName: isSelected ? tab.activeIcon : tab.inactiveIcon)
+                    .font(.system(size: 24, weight: isSelected ? .semibold : .regular))
+                    .symbolVariant(.none)
+
+                Text(label)
+                    .font(.system(size: 10, weight: isSelected ? .bold : .medium))
+                    .lineLimit(1)
             }
             .foregroundStyle(isSelected ? AppColors.yellow : Self.inactiveColor)
             .frame(maxWidth: .infinity)
