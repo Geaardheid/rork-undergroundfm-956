@@ -128,7 +128,11 @@ struct SearchView: View {
                 covers: coverTracks,
                 newArtists: newArtists,
                 recentTracks: recentTracks,
-                genreCovers: genreCovers
+                genreCovers: genreCovers,
+                onPlay: { track in
+                    MusicPlayer.shared.load(track: track)
+                    dismiss()
+                }
             )
         } else if isLoading && !hasResults {
             ProgressView()
@@ -372,6 +376,7 @@ private struct SearchDiscoverView: View {
     let newArtists: [ArtistSearchResult]
     let recentTracks: [Track]
     let genreCovers: [String: String]
+    let onPlay: (Track) -> Void
 
     private let columns = [
         GridItem(.flexible(), spacing: AppSpacing.md),
@@ -381,7 +386,7 @@ private struct SearchDiscoverView: View {
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: AppSpacing.xl) {
-                FloatingCoverStrip(tracks: Array(covers.prefix(3)))
+                FloatingCoverStrip(tracks: Array(covers.prefix(3)), onPlay: onPlay)
                     .padding(.top, AppSpacing.sm)
 
                 genresSection
@@ -505,6 +510,7 @@ private struct SearchDiscoverView: View {
 /// Horizontale strook van 3 schuine covers met gele glow + crossfade van de huidige track-info.
 private struct FloatingCoverStrip: View {
     let tracks: [Track]
+    let onPlay: (Track) -> Void
     @State private var activeIndex: Int = 0
 
     private let angles: [Double] = [-8, 6, -5]
@@ -516,7 +522,7 @@ private struct FloatingCoverStrip: View {
             HStack(spacing: -24) {
                 ForEach(Array(tracks.enumerated()), id: \.element.id) { index, track in
                     FloatingCover(url: track.thumbnailUrl, highlighted: index == activeIndex) {
-                        MusicPlayer.shared.load(track: track)
+                        onPlay(track)
                     }
                     .rotationEffect(.degrees(angles[index % angles.count]))
                     .zIndex(index == activeIndex ? 10 : Double(index))
