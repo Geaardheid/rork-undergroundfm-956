@@ -15,6 +15,7 @@ struct ProfileView: View {
     @State private var settings = AppSettings.shared
 
     @State private var showBecomeArtist: Bool = false
+    @State private var showSettings: Bool = false
     @State private var showUpload: Bool = false
     @State private var showPhotoNotice: Bool = false
     @State private var isEditingBio: Bool = false
@@ -22,7 +23,7 @@ struct ProfileView: View {
 
     var body: some View {
         NavigationStack {
-            FloatingHeaderScreen(header: { FloatingHeaderTitle(title: l10n.t("tab.profile")) }, onRefresh: { await loadData() }) {
+            FloatingHeaderScreen(header: { profileHeaderBar }, onRefresh: { await loadData() }) {
                 VStack(spacing: AppSpacing.xl) {
                     header
 
@@ -40,6 +41,9 @@ struct ProfileView: View {
             }
             .navigationDestination(isPresented: $showBecomeArtist) {
                 BecomeArtistView(l10n: l10n)
+            }
+            .navigationDestination(isPresented: $showSettings) {
+                SettingsView(l10n: l10n)
             }
             .navigationDestination(for: ArtistRoute.self) { route in
                 ArtistProfileView(route: route, l10n: l10n)
@@ -61,6 +65,23 @@ struct ProfileView: View {
             }
         }
         .task(id: taskKey) { await loadData() }
+    }
+
+    private var profileHeaderBar: some View {
+        HStack(alignment: .center) {
+            Text(l10n.t("tab.profile"))
+                .font(.system(size: AppFontSize.xl, weight: .black))
+                .foregroundStyle(AppColors.textPrimary)
+            Spacer(minLength: 0)
+            Button {
+                showSettings = true
+            } label: {
+                Image(systemName: "gearshape.fill")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundStyle(AppColors.yellow)
+            }
+            .buttonStyle(PressableScaleStyle())
+        }
     }
 
     private var taskKey: String {

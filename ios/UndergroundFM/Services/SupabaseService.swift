@@ -123,6 +123,20 @@ nonisolated final class SupabaseService: @unchecked Sendable {
         )
     }
 
+    /// Werk het wachtwoord van de ingelogde gebruiker bij (GoTrue PUT /user).
+    func updatePassword(newPassword: String, accessToken: String) async throws {
+        guard isConfigured else { throw SupabaseError.missingConfig }
+        let endpoint = URL(string: "\(url)/auth/v1/user")!
+        var req = URLRequest(url: endpoint)
+        req.httpMethod = "PUT"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue(anonKey, forHTTPHeaderField: "apikey")
+        req.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        req.httpBody = try JSONSerialization.data(withJSONObject: ["password": newPassword])
+        let (data, resp) = try await session.data(for: req)
+        try Self.assertOK(resp, data: data)
+    }
+
     func signOut(accessToken: String) async throws {
         guard isConfigured else { throw SupabaseError.missingConfig }
         let endpoint = URL(string: "\(url)/auth/v1/logout")!

@@ -294,6 +294,23 @@ $;
 GRANT EXECUTE ON FUNCTION public.increment_stream_count(UUID) TO anon, authenticated;
 
 -- ─────────────────────────────────────────
+-- RPC: delete_current_user
+-- Verwijdert de ingelogde gebruiker volledig (auth.users → cascade users-row).
+-- Aangeroepen vanuit Instellingen → "Account verwijderen".
+-- ─────────────────────────────────────────
+CREATE OR REPLACE FUNCTION public.delete_current_user()
+RETURNS void
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $
+  DELETE FROM public.users WHERE id = auth.uid();
+  DELETE FROM auth.users WHERE id = auth.uid();
+$;
+
+GRANT EXECUTE ON FUNCTION public.delete_current_user() TO authenticated;
+
+-- ─────────────────────────────────────────
 -- Test invite codes (optioneel — verwijder na test)
 -- ─────────────────────────────────────────
 INSERT INTO public.invite_codes (code, is_active, max_uses)

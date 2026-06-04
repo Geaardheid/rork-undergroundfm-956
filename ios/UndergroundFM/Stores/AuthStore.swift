@@ -108,6 +108,53 @@ final class AuthStore {
         self.errorMessage = nil
     }
 
+    /// Wijzig wachtwoord: verifieer het huidige wachtwoord en zet daarna het nieuwe.
+    func changePassword(current: String, new: String) async -> Bool {
+        guard let user = currentUser else {
+            self.errorMessage = L10n.shared.t("errors.unknown")
+            return false
+        }
+        isLoading = true
+        errorMessage = nil
+        do {
+            // Verifieer het huidige wachtwoord door opnieuw in te loggen.
+            let session = try await SupabaseService.shared.signIn(email: user.email, password: current)
+            SessionStore.shared.save(session)
+            try await SupabaseService.shared.updatePassword(newPassword: new, accessToken: session.accessToken)
+            isLoading = false
+            return true
+        } catch {
+            self.errorMessage = L10n.shared.t("settings.passwordWrong")
+            isLoading = false
+            return false
+        }
+    }
+
+    /// Verwijder het account: probeer de auth-user via RPC te verwijderen, ruim de
+    /// users-row op en log daarna uit.
+    func deleteAccount() async -> Bool {
+        guard let user = currentUser,
+              let token = SessionStore.shared.session?.accessToken else {
+            self.errorMessage = L10n.shared.t("errors.unknown")
+            return false
+        }
+        isLoading = true
+        errorMessage = nil
+
+        // Best-effort: SECURITY DEFINER RPC verwijdert de auth.users row (zie schema.sql).
+        try? await SupabaseService.shared.rpc("delete_current_user", params: [:], accessToken: token)
+        // Ruim de users-row op (RPC met cascade kan dit al hebben gedaan).
+        try? await SupabaseService.shared.delete(
+            table: "users",
+            query: ["id": "eq.\(user.id)"],
+            accessToken: token
+        )
+
+        await signOut()
+        isLoading = false
+        return true
+    }
+
     /// Look up the artist ID for the current user and cache it.
     private func loadArtistId() async {
         guard let user = currentUser,
