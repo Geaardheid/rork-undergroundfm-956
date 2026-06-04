@@ -64,7 +64,10 @@ struct HomeFeedView: View {
                 await feed.loadAll()
             }
 
-            header
+            VStack(spacing: 0) {
+                header
+                fadeUnderHeader
+            }
         }
         .task {
             if feed.featured == nil {
@@ -76,48 +79,34 @@ struct HomeFeedView: View {
         }
     }
 
-    // MARK: - Floating header (liquid glass on iOS 26)
+    // MARK: - Sticky header (gedeelde stijl) met fade-effect
 
     private var header: some View {
-        HStack(alignment: .center) {
-            Image("logo")
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(height: 32)
-                .accessibilityLabel("UndergroundFM")
-            Spacer()
-            HStack(spacing: AppSpacing.md) {
-                headerIcon("magnifyingglass") { showSearch = true }
-                headerIcon("bell") {}
+        TabHeader {
+            HStack(alignment: .center) {
+                Image("logo")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(height: 32)
+                    .accessibilityLabel("UndergroundFM")
+                Spacer()
+                HStack(spacing: AppSpacing.md) {
+                    headerIcon("magnifyingglass") { showSearch = true }
+                    headerIcon("bell") {}
+                }
             }
         }
-        .padding(.horizontal, AppSpacing.lg)
-        .padding(.vertical, AppSpacing.sm)
-        .background(headerBackground)
-        .overlay(alignment: .bottom) { yellowGlowLine }
     }
 
-    /// Dunne gele lijn met zachte glow onderaan de navigatiebalk.
-    private var yellowGlowLine: some View {
-        Rectangle()
-            .fill(AppColors.yellow)
-            .frame(height: 2)
-            .shadow(color: AppColors.yellow, radius: 8)
-            .shadow(color: AppColors.yellow.opacity(0.6), radius: 4)
-    }
-
-    @ViewBuilder
-    private var headerBackground: some View {
-        if #available(iOS 26.0, *) {
-            Rectangle()
-                .fill(.clear)
-                .glassEffect(.regular, in: Rectangle())
-                .overlay(Rectangle().fill(AppColors.bg.opacity(0.35)))
-        } else {
-            Rectangle()
-                .fill(AppColors.bg.opacity(0.85))
-                .background(.ultraThinMaterial)
-        }
+    /// Zachte fade onder de sticky header zodat content er gracieus achter verdwijnt.
+    private var fadeUnderHeader: some View {
+        LinearGradient(
+            colors: [AppColors.bg, AppColors.bg.opacity(0)],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        .frame(height: 24)
+        .allowsHitTesting(false)
     }
 
     private func headerIcon(_ name: String, action: @escaping () -> Void) -> some View {

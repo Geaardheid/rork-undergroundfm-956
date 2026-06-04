@@ -22,11 +22,12 @@ struct ProfileView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
+            ZStack(alignment: .top) {
                 AppColors.bg.ignoresSafeArea()
 
                 ScrollView {
                     VStack(spacing: AppSpacing.xl) {
+                        Color.clear.frame(height: 56)
                         header
 
                         if isArtist {
@@ -39,8 +40,10 @@ struct ProfileView: View {
                         logoutButton
                         Color.clear.frame(height: 120)
                     }
-                    .padding(.top, AppSpacing.xxl)
+                    .padding(.top, AppSpacing.md)
                 }
+
+                TabHeader(title: l10n.t("tab.profile"))
             }
             .navigationDestination(isPresented: $showBecomeArtist) {
                 BecomeArtistView(l10n: l10n)

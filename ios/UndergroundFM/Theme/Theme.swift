@@ -10,6 +10,7 @@ import SwiftUI
 enum AppColors {
     // Achtergronden
     static let bg = Color(hex: 0x0A0A0A)
+    static let headerBg = Color(hex: 0x141414)
     static let card = Color(hex: 0x181818)
     static let cardHover = Color(hex: 0x222222)
     static let border = Color(hex: 0x2A2A2A)

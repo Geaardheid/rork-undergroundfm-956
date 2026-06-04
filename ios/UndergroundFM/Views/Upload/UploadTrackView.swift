@@ -56,11 +56,12 @@ struct UploadTrackView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
+            ZStack(alignment: .top) {
                 AppColors.bg.ignoresSafeArea()
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: AppSpacing.xl) {
+                        Color.clear.frame(height: 48)
                         header
                         audioPickerCard
                         coverPickerCard
@@ -80,14 +81,12 @@ struct UploadTrackView: View {
                         Color.clear.frame(height: 100)
                     }
                     .padding(.horizontal, AppSpacing.lg)
-                    .padding(.top, AppSpacing.lg)
+                    .padding(.top, AppSpacing.md)
                 }
+
+                TabHeader(title: l10n.t("tab.upload"))
             }
-            .navigationTitle("Upload")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(AppColors.bg, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbar(.hidden, for: .navigationBar)
             .fileImporter(
                 isPresented: $showAudioPicker,
                 allowedContentTypes: [.mp3, .mpeg4Audio, .audio],

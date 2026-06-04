@@ -87,36 +87,7 @@ struct LibraryView: View {
     // MARK: - Header
 
     private var header: some View {
-        HStack(alignment: .center) {
-            Text(l10n.t("tab.library"))
-                .font(.system(size: AppFontSize.xl, weight: .black))
-                .foregroundStyle(AppColors.textPrimary)
-            Spacer()
-        }
-        .padding(.horizontal, AppSpacing.lg)
-        .padding(.vertical, AppSpacing.sm)
-        .background(headerBackground)
-        .overlay(alignment: .bottom) {
-            Rectangle()
-                .fill(AppColors.yellow)
-                .frame(height: 2)
-                .shadow(color: AppColors.yellow, radius: 8)
-                .shadow(color: AppColors.yellow.opacity(0.6), radius: 4)
-        }
-    }
-
-    @ViewBuilder
-    private var headerBackground: some View {
-        if #available(iOS 26.0, *) {
-            Rectangle()
-                .fill(.clear)
-                .glassEffect(.regular, in: Rectangle())
-                .overlay(Rectangle().fill(AppColors.bg.opacity(0.35)))
-        } else {
-            Rectangle()
-                .fill(AppColors.bg.opacity(0.85))
-                .background(.ultraThinMaterial)
-        }
+        TabHeader(title: l10n.t("tab.library"))
     }
 
     // MARK: - Chips + sort

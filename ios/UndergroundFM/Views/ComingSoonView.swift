@@ -11,8 +11,9 @@ struct ComingSoonView: View {
     let icon: String
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .top) {
             AppColors.bg.ignoresSafeArea()
+
             VStack(spacing: AppSpacing.lg) {
                 ZStack {
                     Circle()
@@ -31,6 +32,9 @@ struct ComingSoonView: View {
                     .foregroundStyle(AppColors.textMuted)
                     .textCase(.uppercase)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            TabHeader(title: l10n.t(titleKey))
         }
     }
 }
