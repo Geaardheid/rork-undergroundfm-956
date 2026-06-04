@@ -18,6 +18,8 @@ struct ClipPlayerView: View {
     @State private var player: AVPlayer
     @State private var showControls: Bool = true
     @State private var syncObserver: Any?
+    @State private var statusObserver: NSKeyValueObservation?
+    @State private var didStartSyncedPlayback: Bool = false
 
     /// Maximaal toegestane drift (s) voordat de video opnieuw wordt gesynct.
     private let driftTolerance: TimeInterval = 0.35
@@ -62,7 +64,8 @@ struct ClipPlayerView: View {
         .onDisappear { stopSync() }
         // Volg play/pause van de audio.
         .onChange(of: music.isPlaying) { _, playing in
-            syncToAudio(forceSeek: false)
+            guard didStartSyncedPlayback else { return }
+            if playing { player.play() } else { player.pause() }
             if playing {
                 withAnimation(.easeInOut(duration: 0.3).delay(0.8)) { showControls = false }
             } else {
@@ -71,44 +74,83 @@ struct ClipPlayerView: View {
         }
         // Volg seeks van de audio (scrubber, skip, remote commands).
         .onChange(of: music.currentTime) { _, _ in
+            guard didStartSyncedPlayback else { return }
             correctDriftIfNeeded()
         }
     }
 
     // MARK: - Sync
 
-    /// Synchroniseer de videopositie en -status bij het openen van de Clip-tab.
+    /// Bij het openen van de Clip-tab: pauzeer de audio, wacht tot de video klaar is om
+    /// af te spelen, seek de video naar de exacte audiopositie en hervat daarna audio en
+    /// video op exact hetzelfde moment. Zo kan de video niet achterlopen door laadtijd.
     private func startSync() {
-        syncToAudio(forceSeek: true)
+        didStartSyncedPlayback = false
+        let resume = music.isPlaying
+
+        // 1. Pauzeer de audio zolang de video buffert, zodat ze niet uit elkaar lopen.
+        music.pause()
+
+        // 2. Wacht tot het video-item klaar is om af te spelen.
+        if let item = player.currentItem, item.status == .readyToPlay {
+            beginSyncedPlayback(resume: resume)
+        } else {
+            statusObserver = player.currentItem?.observe(\.status, options: [.new]) { item, _ in
+                guard item.status == .readyToPlay else { return }
+                Task { @MainActor in
+                    self.statusObserver?.invalidate()
+                    self.statusObserver = nil
+                    self.beginSyncedPlayback(resume: resume)
+                }
+            }
+        }
 
         // Periodieke observer corrigeert kleine drift tijdens het afspelen.
         let interval = CMTime(seconds: 0.5, preferredTimescale: 600)
         syncObserver = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { _ in
+            guard didStartSyncedPlayback else { return }
             correctDriftIfNeeded()
         }
     }
 
+    /// Seek de video naar de huidige audiopositie en hervat (indien nodig) beide samen.
+    private func beginSyncedPlayback(resume: Bool) {
+        let target = CMTime(seconds: max(music.currentTime, 0), preferredTimescale: 600)
+        player.seek(to: target, toleranceBefore: .zero, toleranceAfter: .zero) { _ in
+            Task { @MainActor in
+                self.didStartSyncedPlayback = true
+                if resume {
+                    // 3. Hervat audio en video op exact hetzelfde moment.
+                    self.player.play()
+                    self.music.play()
+                    withAnimation(.easeInOut(duration: 0.3).delay(0.8)) { self.showControls = false }
+                } else {
+                    self.player.pause()
+                }
+            }
+        }
+    }
+
+    /// Bij het verlaten van de Clip-tab: pauzeer de video, sync de audio naar de huidige
+    /// videopositie en hervat de audio (indien die speelde).
     private func stopSync() {
         if let obs = syncObserver {
             player.removeTimeObserver(obs)
             syncObserver = nil
         }
-        player.pause()
-    }
+        statusObserver?.invalidate()
+        statusObserver = nil
 
-    /// Zet de video op de exacte audiopositie en match de afspeelstatus.
-    private func syncToAudio(forceSeek: Bool) {
-        let target = CMTime(seconds: max(music.currentTime, 0), preferredTimescale: 600)
-        player.seek(to: target, toleranceBefore: .zero, toleranceAfter: .zero) { _ in
-            if music.isPlaying {
-                player.play()
-            } else {
-                player.pause()
-            }
+        let wasPlaying = music.isPlaying
+        player.pause()
+
+        let videoTime = player.currentTime().seconds
+        if videoTime.isFinite, didStartSyncedPlayback {
+            // music.seek behoudt de afspeelstatus; audio loopt dus door als 'ie speelde.
+            music.seek(to: max(videoTime, 0))
+            if wasPlaying && !music.isPlaying { music.play() }
         }
-        if !forceSeek {
-            if music.isPlaying { player.play() } else { player.pause() }
-        }
+        didStartSyncedPlayback = false
     }
 
     /// Reseek alleen als de video te ver van de audio afdrijft.
