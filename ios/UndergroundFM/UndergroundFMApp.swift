@@ -18,6 +18,11 @@ struct UndergroundFMApp: App {
                 .task {
                     await auth.restoreSession()
                 }
+                .onOpenURL { url in
+                    // Deep link na e-mailbevestiging: undergroundfm://auth/callback
+                    guard url.scheme?.lowercased() == "undergroundfm" else { return }
+                    Task { await auth.restoreSession() }
+                }
         }
     }
 }

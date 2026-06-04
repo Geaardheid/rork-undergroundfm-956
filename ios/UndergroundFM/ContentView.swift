@@ -23,6 +23,9 @@ struct RootView: View {
             } else if auth.isAuthenticated {
                 MainTabView(l10n: l10n)
                     .transition(.opacity)
+            } else if auth.awaitingConfirmation {
+                VerifyEmailView(l10n: l10n)
+                    .transition(.opacity)
             } else if !onboardingCompleted {
                 OnboardingView(
                     l10n: l10n,
@@ -43,8 +46,15 @@ struct RootView: View {
             RegisterView(l10n: l10n, initialIsArtist: registerAsArtist)
                 .presentationBackground(AppColors.bg)
         }
+        .onChange(of: auth.awaitingConfirmation) { _, newValue in
+            if newValue { showRegister = false }
+        }
+        .onChange(of: auth.isAuthenticated) { _, newValue in
+            if newValue { showRegister = false }
+        }
         .animation(.easeInOut(duration: 0.25), value: auth.isAuthenticated)
         .animation(.easeInOut(duration: 0.25), value: auth.isBooting)
+        .animation(.easeInOut(duration: 0.25), value: auth.awaitingConfirmation)
         .animation(.easeInOut(duration: 0.25), value: onboardingCompleted)
     }
 }

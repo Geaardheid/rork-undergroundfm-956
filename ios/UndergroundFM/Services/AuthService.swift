@@ -7,6 +7,13 @@
 
 import Foundation
 
+/// Resultaat van een registratiepoging. Bij e-mailbevestiging kan er nog geen
+/// sessie zijn — dan moeten we naar het verify-scherm i.p.v. een fout te tonen.
+nonisolated enum SignUpOutcome {
+    case completed(AppUser)
+    case needsConfirmation
+}
+
 @MainActor
 final class AuthService {
     static let shared = AuthService()
@@ -16,12 +23,19 @@ final class AuthService {
 
     // MARK: - Sign up flow
 
-    /// Registreer fan: maakt auth user + users row aan.
-    func signUpFan(email: String, password: String, displayName: String, language: AppLanguage) async throws -> AppUser {
+    /// Registreer fan: maakt auth user aan. Als er direct een sessie is
+    /// (e-mailbevestiging uit), wordt de users-row meteen aangemaakt en
+    /// `.completed` teruggegeven. Anders `.needsConfirmation` — de users-row
+    /// volgt na e-mailbevestiging via `completeFan`.
+    //
+    // NB: Stel de redirect URL in Supabase Dashboard → Authentication → URL
+    // Configuration in op: undergroundfm://auth/callback
+    func signUpFan(email: String, password: String, displayName: String, language: AppLanguage) async throws -> SignUpOutcome {
         let result = try await sb.signUp(email: email, password: password)
 
-        // Probeer in te loggen om sessie te krijgen (signup geeft niet altijd token mee bij email confirmation off/on)
-        let session = try await ensureSession(email: email, password: password, fallbackToken: result.accessToken, fallbackRefresh: result.refreshToken, userId: result.userId)
+        guard let session = await sessionAfterSignUp(email: email, password: password, result: result) else {
+            return .needsConfirmation
+        }
 
         let userRow = try await createOrUpdateUserRow(
             userId: result.userId,
@@ -33,14 +47,27 @@ final class AuthService {
             accessToken: session.accessToken
         )
         SessionStore.shared.save(session)
-        return userRow
+        return .completed(userRow)
+    }
+
+    /// Rond een fan-registratie af na e-mailbevestiging.
+    func completeFan(email: String, password: String, displayName: String, language: AppLanguage) async throws -> AppUser {
+        let session = try await sb.signIn(email: email, password: password)
+        let user = try await fetchOrCreateUserRow(
+            session: session,
+            displayName: displayName,
+            role: .consumer,
+            isFoundingArtist: false,
+            language: language
+        )
+        SessionStore.shared.save(session)
+        return user
     }
 
     /// Registreer artist: maakt auth user, users row (role=artist), claimt invite code, maakt artists row.
-    func signUpArtist(email: String, password: String, displayName: String, inviteCode: String, language: AppLanguage) async throws -> AppUser {
+    func signUpArtist(email: String, password: String, displayName: String, inviteCode: String, language: AppLanguage) async throws -> SignUpOutcome {
         // Stap 1: valideer code (zonder sessie — invite_codes_verify policy laat anon select toe)
         let code = inviteCode.uppercased().trimmingCharacters(in: .whitespaces)
-        let isFounding = code.hasPrefix("FOUNDING") || code.hasPrefix("FA")
         let codes: [InviteCodeRow] = try await sb.select(
             InviteCodeRow.self,
             from: "invite_codes",
@@ -60,47 +87,34 @@ final class AuthService {
 
         // Stap 2: sign up
         let result = try await sb.signUp(email: email, password: password)
-        let session = try await ensureSession(email: email, password: password, fallbackToken: result.accessToken, fallbackRefresh: result.refreshToken, userId: result.userId)
+        guard let session = await sessionAfterSignUp(email: email, password: password, result: result) else {
+            // E-mailbevestiging vereist — provisioning gebeurt na bevestiging.
+            return .needsConfirmation
+        }
 
-        // Stap 3: users row
-        let user = try await createOrUpdateUserRow(
-            userId: result.userId,
+        // Stap 3-5: users row, artists row, claim invite code.
+        let user = try await provisionArtist(
+            session: session,
             email: email,
             displayName: displayName,
-            role: .artist,
-            isFoundingArtist: isFounding,
-            language: language,
-            accessToken: session.accessToken
+            code: code,
+            language: language
         )
+        SessionStore.shared.save(session)
+        return .completed(user)
+    }
 
-        // Stap 4: artists row
-        let sharePct = isFounding ? 0.60 : 0.50
-        _ = try await sb.insert(
-            InsertResult.self,
-            into: "artists",
-            values: [
-                "user_id": result.userId,
-                "artist_name": displayName,
-                "invite_code_used": code,
-                "revenue_share_pct": sharePct,
-                "verified": false
-            ],
-            accessToken: session.accessToken
+    /// Rond een artiest-registratie af na e-mailbevestiging.
+    func completeArtist(email: String, password: String, displayName: String, inviteCode: String, language: AppLanguage) async throws -> AppUser {
+        let session = try await sb.signIn(email: email, password: password)
+        let code = inviteCode.uppercased().trimmingCharacters(in: .whitespaces)
+        let user = try await provisionArtist(
+            session: session,
+            email: email,
+            displayName: displayName,
+            code: code,
+            language: language
         )
-
-        // Stap 5: claim invite code (use_count + 1, used_by, used_at)
-        let newCount = (inviteRow.useCount ?? 0) + 1
-        try await sb.update(
-            table: "invite_codes",
-            query: ["code": "eq.\(code)"],
-            values: [
-                "used_by": result.userId,
-                "used_at": ISO8601DateFormatter().string(from: Date()),
-                "use_count": newCount
-            ],
-            accessToken: session.accessToken
-        )
-
         SessionStore.shared.save(session)
         return user
     }
@@ -143,12 +157,107 @@ final class AuthService {
 
     private struct InsertResult: Decodable { let id: String? }
 
-    private func ensureSession(email: String, password: String, fallbackToken: String?, fallbackRefresh: String?, userId: String) async throws -> AuthSession {
-        if let token = fallbackToken, let refresh = fallbackRefresh {
-            return AuthSession(accessToken: token, refreshToken: refresh, userId: userId, email: email)
+    /// Probeer een sessie te bemachtigen direct na signup. Geeft `nil` terug als
+    /// e-mailbevestiging vereist is (geen token + sign-in faalt nog).
+    private func sessionAfterSignUp(
+        email: String,
+        password: String,
+        result: (userId: String, accessToken: String?, refreshToken: String?)
+    ) async -> AuthSession? {
+        if let token = result.accessToken, let refresh = result.refreshToken {
+            return AuthSession(accessToken: token, refreshToken: refresh, userId: result.userId, email: email)
         }
-        // Email confirmation aan? Probeer signIn — kan falen, dan tonen we duidelijke fout.
-        return try await sb.signIn(email: email, password: password)
+        return try? await sb.signIn(email: email, password: password)
+    }
+
+    /// Haal de bestaande users-row op of maak hem aan (idempotent).
+    private func fetchOrCreateUserRow(
+        session: AuthSession,
+        displayName: String?,
+        role: UserRole,
+        isFoundingArtist: Bool,
+        language: AppLanguage
+    ) async throws -> AppUser {
+        let existing: [AppUser] = try await sb.select(
+            AppUser.self,
+            from: "users",
+            query: ["id": "eq.\(session.userId)", "select": "*", "limit": "1"],
+            accessToken: session.accessToken
+        )
+        if let row = existing.first { return row }
+        return try await createOrUpdateUserRow(
+            userId: session.userId,
+            email: session.email,
+            displayName: displayName,
+            role: role,
+            isFoundingArtist: isFoundingArtist,
+            language: language,
+            accessToken: session.accessToken
+        )
+    }
+
+    /// Maakt users-row + artists-row aan en claimt de invite code. Idempotent:
+    /// als de users-row al bestaat, wordt die teruggegeven zonder dubbel werk.
+    private func provisionArtist(
+        session: AuthSession,
+        email: String,
+        displayName: String,
+        code: String,
+        language: AppLanguage
+    ) async throws -> AppUser {
+        let existing: [AppUser] = try await sb.select(
+            AppUser.self,
+            from: "users",
+            query: ["id": "eq.\(session.userId)", "select": "*", "limit": "1"],
+            accessToken: session.accessToken
+        )
+        if let row = existing.first { return row }
+
+        let isFounding = code.hasPrefix("FOUNDING") || code.hasPrefix("FA")
+        let user = try await createOrUpdateUserRow(
+            userId: session.userId,
+            email: email,
+            displayName: displayName,
+            role: .artist,
+            isFoundingArtist: isFounding,
+            language: language,
+            accessToken: session.accessToken
+        )
+
+        let sharePct = isFounding ? 0.60 : 0.50
+        _ = try await sb.insert(
+            InsertResult.self,
+            into: "artists",
+            values: [
+                "user_id": session.userId,
+                "artist_name": displayName,
+                "invite_code_used": code,
+                "revenue_share_pct": sharePct,
+                "verified": false
+            ],
+            accessToken: session.accessToken
+        )
+
+        let codes: [InviteCodeRow] = try await sb.select(
+            InviteCodeRow.self,
+            from: "invite_codes",
+            query: ["code": "eq.\(code)", "select": "*", "limit": "1"],
+            accessToken: session.accessToken
+        )
+        if let inviteRow = codes.first {
+            let newCount = (inviteRow.useCount ?? 0) + 1
+            try await sb.update(
+                table: "invite_codes",
+                query: ["code": "eq.\(code)"],
+                values: [
+                    "used_by": session.userId,
+                    "used_at": ISO8601DateFormatter().string(from: Date()),
+                    "use_count": newCount
+                ],
+                accessToken: session.accessToken
+            )
+        }
+        return user
     }
 
     private func createOrUpdateUserRow(

@@ -6,5 +6,16 @@
 	<array>
 		<string>audio</string>
 	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>app.rork.fze860iivpe2p7f12sxxj.auth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>undergroundfm</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>
