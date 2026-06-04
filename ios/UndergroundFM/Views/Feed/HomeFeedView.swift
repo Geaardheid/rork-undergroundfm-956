@@ -10,16 +10,6 @@ struct HomeFeedView: View {
     @State private var feed = FeedStore()
     @State private var path = NavigationPath()
     @State private var showSearch: Bool = false
-    @State private var scrollOffset: CGFloat = 0
-
-    /// Drempel waarna de volledige header inklapt naar de compacte mini-header.
-    /// Ongeveer de hoogte van de featured banner zodat de collapse triggert
-    /// wanneer de banner voorbij scrollt.
-    private let collapseThreshold: CGFloat = 180
-
-    private var isCollapsed: Bool {
-        scrollOffset > collapseThreshold
-    }
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -32,64 +22,37 @@ struct HomeFeedView: View {
     }
 
     private var content: some View {
-        ZStack(alignment: .top) {
-            AppColors.bg.ignoresSafeArea()
-
-            ScrollView(showsIndicators: false) {
-                LazyVStack(alignment: .leading, spacing: AppSpacing.xxl, pinnedViews: []) {
-                    // Spacer voor floating header
-                    Color.clear.frame(height: 64)
-
-                    FeaturedBanner(
-                        track: feed.featured,
-                        isLoading: feed.isFeaturedLoading,
-                        l10n: l10n,
-                        onTap: {
-                            if let track = feed.featured {
-                                MusicPlayer.shared.load(track: track)
-                            }
+        FloatingHeaderScreen(header: { header }, onRefresh: { await feed.loadAll() }) {
+            LazyVStack(alignment: .leading, spacing: AppSpacing.xxl) {
+                FeaturedBanner(
+                    track: feed.featured,
+                    isLoading: feed.isFeaturedLoading,
+                    l10n: l10n,
+                    onTap: {
+                        if let track = feed.featured {
+                            MusicPlayer.shared.load(track: track)
                         }
-                    )
-
-                    ForEach(GenreSection.all) { section in
-                        GenreRow(
-                            section: section,
-                            state: feed.state(for: section.id),
-                            l10n: l10n,
-                            onSelectTrack: { track in
-                                MusicPlayer.shared.load(track: track)
-                            },
-                            onSelectArtist: { track in
-                                path.append(ArtistRoute(artistId: track.artistId, artistName: track.artistName))
-                            },
-                            onRetry: { Task { await feed.load(section: section) } }
-                        )
                     }
+                )
 
-                    Color.clear.frame(height: 120)
+                ForEach(GenreSection.all) { section in
+                    GenreRow(
+                        section: section,
+                        state: feed.state(for: section.id),
+                        l10n: l10n,
+                        onSelectTrack: { track in
+                            MusicPlayer.shared.load(track: track)
+                        },
+                        onSelectArtist: { track in
+                            path.append(ArtistRoute(artistId: track.artistId, artistName: track.artistName))
+                        },
+                        onRetry: { Task { await feed.load(section: section) } }
+                    )
                 }
-                .padding(.top, AppSpacing.sm)
-            }
-            .refreshable {
-                await feed.loadAll()
-            }
-            .onScrollGeometryChange(for: CGFloat.self) { geometry in
-                geometry.contentOffset.y + geometry.contentInsets.top
-            } action: { _, newValue in
-                scrollOffset = newValue
-            }
 
-            VStack(spacing: 0) {
-                if isCollapsed {
-                    miniHeader
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                } else {
-                    header
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                }
-                fadeUnderHeader
+                Color.clear.frame(height: 120)
             }
-            .animation(.easeInOut(duration: 0.25), value: isCollapsed)
+            .padding(.top, AppSpacing.sm)
         }
         .task {
             if feed.featured == nil {
@@ -101,48 +64,21 @@ struct HomeFeedView: View {
         }
     }
 
-    // MARK: - Sticky header (gedeelde stijl) met fade-effect
+    // MARK: - Floating transparante header (logo + iconen)
 
     private var header: some View {
-        TabHeader {
-            HStack(alignment: .center) {
-                Image("logo")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(height: 32)
-                    .accessibilityLabel("UndergroundFM")
-                Spacer()
-                HStack(spacing: AppSpacing.md) {
-                    headerIcon("magnifyingglass") { showSearch = true }
-                    headerIcon("bell") {}
-                }
+        HStack(alignment: .center) {
+            Image("logo")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(height: 32)
+                .accessibilityLabel("UndergroundFM")
+            Spacer()
+            HStack(spacing: AppSpacing.md) {
+                headerIcon("magnifyingglass") { showSearch = true }
+                headerIcon("bell") {}
             }
         }
-    }
-
-    /// Compacte sticky mini-header: alleen zoek- en notificatie-iconen op een
-    /// donkere achtergrond met de gele lijn. Verschijnt zodra de banner voorbij scrollt.
-    private var miniHeader: some View {
-        TabHeader {
-            HStack(alignment: .center) {
-                Spacer()
-                HStack(spacing: AppSpacing.md) {
-                    headerIcon("magnifyingglass") { showSearch = true }
-                    headerIcon("bell") {}
-                }
-            }
-        }
-    }
-
-    /// Zachte fade onder de sticky header zodat content er gracieus achter verdwijnt.
-    private var fadeUnderHeader: some View {
-        LinearGradient(
-            colors: [AppColors.bg, AppColors.bg.opacity(0)],
-            startPoint: .top,
-            endPoint: .bottom
-        )
-        .frame(height: 24)
-        .allowsHitTesting(false)
     }
 
     private func headerIcon(_ name: String, action: @escaping () -> Void) -> some View {

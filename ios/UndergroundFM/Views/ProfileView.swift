@@ -22,28 +22,21 @@ struct ProfileView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack(alignment: .top) {
-                AppColors.bg.ignoresSafeArea()
+            FloatingHeaderScreen(header: { FloatingHeaderTitle(title: l10n.t("tab.profile")) }, onRefresh: { await loadData() }) {
+                VStack(spacing: AppSpacing.xl) {
+                    header
 
-                ScrollView {
-                    VStack(spacing: AppSpacing.xl) {
-                        Color.clear.frame(height: 56)
-                        header
-
-                        if isArtist {
-                            artistSections
-                        } else {
-                            fanSections
-                        }
-
-                        settingsSection
-                        logoutButton
-                        Color.clear.frame(height: 120)
+                    if isArtist {
+                        artistSections
+                    } else {
+                        fanSections
                     }
-                    .padding(.top, AppSpacing.md)
-                }
 
-                TabHeader(title: l10n.t("tab.profile"))
+                    settingsSection
+                    logoutButton
+                    Color.clear.frame(height: 120)
+                }
+                .padding(.top, AppSpacing.md)
             }
             .navigationDestination(isPresented: $showBecomeArtist) {
                 BecomeArtistView(l10n: l10n)

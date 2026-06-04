@@ -56,35 +56,28 @@ struct UploadTrackView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack(alignment: .top) {
-                AppColors.bg.ignoresSafeArea()
+            FloatingHeaderScreen(header: { FloatingHeaderTitle(title: l10n.t("tab.upload")) }) {
+                VStack(alignment: .leading, spacing: AppSpacing.xl) {
+                    header
+                    audioPickerCard
+                    coverPickerCard
+                    titleField
+                    descriptionField
+                    genrePicker
+                    explicitToggle
 
-                ScrollView {
-                    VStack(alignment: .leading, spacing: AppSpacing.xl) {
-                        Color.clear.frame(height: 48)
-                        header
-                        audioPickerCard
-                        coverPickerCard
-                        titleField
-                        descriptionField
-                        genrePicker
-                        explicitToggle
-
-                        if let error = uploadError {
-                            Text(error)
-                                .font(.system(size: AppFontSize.sm, weight: .medium))
-                                .foregroundStyle(AppColors.error)
-                        }
-
-                        uploadButton
-
-                        Color.clear.frame(height: 100)
+                    if let error = uploadError {
+                        Text(error)
+                            .font(.system(size: AppFontSize.sm, weight: .medium))
+                            .foregroundStyle(AppColors.error)
                     }
-                    .padding(.horizontal, AppSpacing.lg)
-                    .padding(.top, AppSpacing.md)
-                }
 
-                TabHeader(title: l10n.t("tab.upload"))
+                    uploadButton
+
+                    Color.clear.frame(height: 100)
+                }
+                .padding(.horizontal, AppSpacing.lg)
+                .padding(.top, AppSpacing.md)
             }
             .toolbar(.hidden, for: .navigationBar)
             .fileImporter(

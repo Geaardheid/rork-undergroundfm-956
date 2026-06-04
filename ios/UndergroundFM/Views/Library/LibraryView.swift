@@ -30,32 +30,24 @@ struct LibraryView: View {
 
     var body: some View {
         NavigationStack(path: $path) {
-            ZStack(alignment: .top) {
-                AppColors.bg.ignoresSafeArea()
+            FloatingHeaderScreen(header: { header }, onRefresh: { await reload() }) {
+                LazyVStack(alignment: .leading, spacing: AppSpacing.lg) {
+                    filterChips
+                    if filter == .tracks { sortMenu }
 
-                ScrollView(showsIndicators: false) {
-                    LazyVStack(alignment: .leading, spacing: AppSpacing.lg) {
-                        Color.clear.frame(height: 8)
-                        filterChips
-                        if filter == .tracks { sortMenu }
-
-                        Group {
-                            switch filter {
-                            case .tracks:    tracksSection
-                            case .artists:   artistsSection
-                            case .playlists: playlistsSection
-                            }
+                    Group {
+                        switch filter {
+                        case .tracks:    tracksSection
+                        case .artists:   artistsSection
+                        case .playlists: playlistsSection
                         }
-                        .transition(.opacity)
-
-                        Color.clear.frame(height: 140)
                     }
-                    .padding(.horizontal, AppSpacing.lg)
-                    .padding(.top, AppSpacing.sm)
-                }
-                .refreshable { await reload() }
+                    .transition(.opacity)
 
-                header
+                    Color.clear.frame(height: 140)
+                }
+                .padding(.horizontal, AppSpacing.lg)
+                .padding(.top, AppSpacing.sm)
             }
             .navigationDestination(for: ArtistRoute.self) { route in
                 ArtistProfileView(route: route, l10n: l10n)
@@ -87,7 +79,7 @@ struct LibraryView: View {
     // MARK: - Header
 
     private var header: some View {
-        TabHeader(title: l10n.t("tab.library"))
+        FloatingHeaderTitle(title: l10n.t("tab.library"))
     }
 
     // MARK: - Chips + sort
@@ -115,7 +107,6 @@ struct LibraryView: View {
                     .buttonStyle(PressableScaleStyle())
                 }
             }
-            .padding(.top, 56)
         }
         .scrollClipDisabled()
     }
