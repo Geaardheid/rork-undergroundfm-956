@@ -1,28 +1,44 @@
-# Spotify-style full player, richer feed cards, and live play counts
+# Add a first-launch onboarding flow for Underground FM
 
-## Full player redesign (Spotify-style)
+## What this adds
 
-- **Pure black background** with a large square cover art, centered, rounded corners and a soft drop shadow.
-- **Track title** (bold white) with the **artist name** below in yellow — tapping the artist name closes the player and opens that artist's public profile page.
-- **Action row** under the title: a heart "like" button on the left, an explicit 🅴 badge in the middle when the track is explicit, and a share button on the right that opens the native iOS share sheet with the track title and artist.
-- **Yellow scrubber bar** with the current time on the left and total time on the right.
-- **Controls row**: shuffle, previous, a large yellow circular play/pause button, next, and repeat. (Shuffle and repeat are visual toggles for now; previous/next/play/pause stay wired to existing playback.)
-- **Tab switch at the top**: "🎧 Audio" and "🎬 Clip". The Clip tab only appears when the track has a video. Tapping Clip shows a "Clip komt binnenkort" coming-soon message (video playback wired up later).
-- **Chevron-down** at the top to dismiss the player.
+A swipeable, three-slide welcome experience that appears only the very first time the app is installed. Once the user finishes it, it never shows again — they go straight to the normal login screen on future launches.
 
-## Feed card improvements
+## Behavior
 
-- Cover art in the trending/genre rows made **slightly smaller** for a tighter, more polished layout.
-- When a track is the one currently playing, show an **animated play/pause icon overlay** on its cover art so users can see what's active at a glance.
+- **Shows once:** A flag is saved when onboarding is finished. On first install the flow appears; after that the app skips it and goes directly to the login screen.
+- The existing login and registration screens, sign-in/sign-up logic, music player, and all other screens stay exactly the same.
+- The role you pick on Slide 2 (Fan or Artist) is remembered and pre-selects the matching option when you reach the registration screen.
 
-## Live play counts
+## Design
 
-- Each time a listening session is saved, the track's play count is **incremented** in the database (reusing the existing count field).
-- The actual play count is shown on **feed cards and in the player**, formatted nicely (e.g. "1.2K" for numbers above a thousand).
-- A small play-count badge appears on cards and in the player metadata.
+- Full black background, bold white and yellow text matching the Underground FM brand.
+- Horizontal swipe between the three slides with yellow dot indicators at the bottom.
+- Text follows the app's current language (Dutch by default, with English as well). No language picker on these screens — kept clean.
 
-## Notes
+## Slides
 
-- Playback engine, login, uploads, and listening-session tracking behavior stay exactly as they are — only the count increment is added on top of the existing save step.
-- App icon already exists; no icon work needed.
+**Slide 1 — Alleen Underground**
+- Large bold white "ALLEEN" above large bold yellow "UNDERGROUND".
+- Subtitle about being the first streaming platform exclusively for independent Dutch artists, fair payout, no mainstream.
+- A row of four small stat badges: "€5/maand", "50% naar artiesten", "100 founding spots", "0× mainstream".
+- Yellow "Volgende" button in the bottom right that advances to the next slide.
 
+**Slide 2 — Kies je rol**
+- Title "Wie ben jij?".
+- Two large tappable cards: "🎧 Ik ben een Fan" and "🎤 Ik ben een Artiest", with the selected one highlighted in yellow.
+- Small helper text under the artist card ("Artiesten hebben nu nog een invite code nodig.") and under the fan card ("Je kunt later ook artiest worden.").
+- Yellow "Volgende" button bottom right.
+
+**Slide 3 — Aan de slag**
+- Small yellow badge "PRE-ALPHA · VERSIE 0.1".
+- Title "Wees er bij." with subtitle explaining the app is in pre-alpha and they're one of the first users.
+- Large yellow "Registreren" button that finishes onboarding and opens the registration screen (pre-set to the role chosen on Slide 2).
+- A text button below: "Heb je al een account? Inloggen" that finishes onboarding and goes to the login screen.
+
+## Screens involved
+
+- New onboarding screen (the three slides above).
+- The app's launch flow is updated so it decides between showing onboarding or the login screen on startup.
+- Registration screen gets a small tweak so it can open with the chosen role already selected.
+- Brand copy for all slides added to the app's translation list (Dutch + English).

@@ -14,6 +14,8 @@ struct RegisterView: View {
     @Environment(AuthStore.self) private var auth
     @Environment(\.dismiss) private var dismiss
     @Bindable var l10n: L10n
+    /// Pre-selects the artist/fan role when opened from onboarding.
+    var initialIsArtist: Bool = false
 
     @State private var step: RegisterStep = .details
     @State private var email: String = ""
@@ -44,7 +46,10 @@ struct RegisterView: View {
                 }
             }
         }
-        .onAppear { auth.clearError() }
+        .onAppear {
+            auth.clearError()
+            isArtist = initialIsArtist
+        }
     }
 
     private var header: some View {
