@@ -68,7 +68,9 @@ struct FloatingHeaderScreen<HeaderContent: View, ScrollBody: View>: View {
         }
 
         if let onRefresh {
-            view.refreshable { await onRefresh() }
+            view
+                .refreshable { await onRefresh() }
+                .tint(AppColors.yellow)
         } else {
             view
         }

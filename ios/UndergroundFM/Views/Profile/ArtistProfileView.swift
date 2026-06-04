@@ -36,6 +36,8 @@ struct ArtistProfileView: View {
                 }
                 .padding(.top, AppSpacing.lg)
             }
+            .refreshable { await load() }
+            .tint(AppColors.yellow)
         }
         .navigationTitle(route.artistName)
         .navigationBarTitleDisplayMode(.inline)
