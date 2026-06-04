@@ -58,6 +58,22 @@ final class SearchService {
         )
     }
 
+    /// Meest beluisterde tracks (globaal) — voor de floating covers in de lege staat.
+    func mostPlayed(limit: Int = 5) async throws -> [Track] {
+        return try await sb.select(
+            Track.self,
+            from: "tracks",
+            query: [
+                "select": "*,artists(artist_name)",
+                "status": "eq.live",
+                "thumbnail_url": "not.is.null",
+                "order": "stream_count.desc.nullslast",
+                "limit": "\(limit)"
+            ],
+            accessToken: SessionStore.shared.session?.accessToken
+        )
+    }
+
     /// Zoek live tracks op titel (ilike).
     func searchTracks(_ term: String) async throws -> [Track] {
         let pattern = "ilike.*\(escape(term))*"

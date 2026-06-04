@@ -1,41 +1,19 @@
-# Build the Library (Bibliotheek) tab with liked tracks, followed artists & playlists — DONE
+# Redesign the search empty state with floating covers + genre tiles
 
-## Library tab (YT Music style, Underground FM colors)
+## Overview
+Give the search screen a bold Underground FM look before you start typing, while keeping all existing search behaviour exactly as-is.
 
-A new full Library screen replaces the current "Coming soon" placeholder on the Bibliotheek tab. Black background with yellow accents, matching the rest of the app.
+## Empty state (before typing)
+- **Floating cover wall** — Show 5 of the most-played track covers from the catalogue, scattered across the upper half of the screen. Each cover is medium-sized (120×120), slightly rotated at a random angle (between -8° and +8°), overlapping its neighbours, with a strong yellow glow behind it for that signature Underground FM energy.
+- These load quietly in the background; if none are available yet, the area simply stays empty (no error).
 
-**Top of screen**
-- Three horizontal filter chips: **Tracks · Artiesten · Playlists**. Selected chip is filled yellow, others are dark outlined.
-- A sort dropdown (only shown on the Tracks filter) with: **Onlangs afgespeeld**, **Onlangs geliket**, **A–Z**.
+- **Genre tiles** — Below the covers, a 2-column grid of large square tiles. Each tile has a dark background, a yellow border, and a big genre emoji above a bold white genre name, centred. The genres match the app's existing home feed set (🔥 Rap, ⚡ Drill, 🌍 Afro, 💎 Trap, 🎵 R&B, 🏠 House).
+- Tapping a tile opens that genre's full track list (the same genre list screen already used from Home), with a back button to return to search.
+- The whole empty state scrolls so the tiles are always reachable.
 
-**Tracks section**
-- List of the user's liked tracks. Each row: square cover art, title, artist name, play count (formatted like "1.2K").
-- Tap a track to play it.
-- Swipe left on a row to unlike (removes it instantly).
-- "Onlangs afgespeeld" orders by last played using the play history; "Onlangs geliket" by like date; "A–Z" by title.
+## Search results (while typing) — visual polish only
+- **Track rows** — Prominent square cover art, bold title, artist name shown in yellow, and a play-count badge. Tapping plays the track (unchanged).
+- **Artist rows** — Large round avatar, bold name, genre tags, and a founding-artist star badge when applicable (unchanged behaviour, refined look).
 
-**Artiesten section**
-- List of artists the user follows. Each row: round avatar, artist name, genre tags, and a founding badge when applicable.
-- Tap to open that artist's public profile page.
-
-**Playlists section**
-- A **"Nieuwe playlist"** button at the top opens a sheet to create a playlist: name, description, and a public/private toggle.
-- List of the user's playlists. Each shows a cover, name, track count, and a public/private badge.
-  - Cover is a 2x2 collage of the first 4 track covers when the playlist has 4+ tracks.
-  - With fewer than 4 tracks, it shows the first track's cover with a yellow gradient overlay and the playlist name in bold white text centered on top.
-- Tap a playlist to open a **playlist detail screen** showing all its tracks with a **"Alles afspelen"** (play all) button that starts from the first track.
-
-**Empty states**
-- Friendly empty messages per section (e.g. "Nog geen gelikete tracks", "Je volgt nog geen artiesten", "Maak je eerste playlist").
-
-## Fixes included
-- Ensure the play-count increment works reliably: correct the database function so it runs, confirm it's called each time a listening session ends, and confirm listeners are allowed to record plays. (The function and call are already wired; I'll fix a small SQL syntax issue in the schema file and verify the flow.)
-
-## Scope
-- Home stays unchanged for now (the "Playlists van de scene" section is skipped per your choice).
-- No changes to login, the music player engine, upload, play-tracking, or other screens.
-- New database tables for playlists are documented as SQL in code comments so you can run them in Supabase.
-
-## Design notes
-- Reuses existing square cover art, avatars, genre tags, founding badge, and press-animation styles for visual consistency.
-- Smooth chip switching, press feedback on rows, and a clean create-playlist sheet.
+## Out of scope (left untouched)
+- Search logic, the music player, sign-in/auth, and every other screen stay exactly as they are.

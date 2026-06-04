@@ -241,6 +241,7 @@ final class L10n {
         "search.noResults": "Geen resultaten gevonden",
         "search.artists": "Artiesten",
         "search.tracks": "Tracks",
+        "search.browseGenres": "Verken genres",
 
         "library.tracks": "Tracks",
         "library.artists": "Artiesten",
@@ -445,6 +446,7 @@ final class L10n {
         "search.noResults": "No results found",
         "search.artists": "Artists",
         "search.tracks": "Tracks",
+        "search.browseGenres": "Browse genres",
 
         "library.tracks": "Tracks",
         "library.artists": "Artists",
@@ -634,6 +636,7 @@ final class L10n {
         "search.noResults": "No se encontraron resultados",
         "search.artists": "Artistas",
         "search.tracks": "Tracks",
+        "search.browseGenres": "Explora géneros",
 
         "library.tracks": "Tracks",
         "library.artists": "Artistas",
