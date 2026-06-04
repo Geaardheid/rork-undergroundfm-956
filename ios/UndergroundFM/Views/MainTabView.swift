@@ -39,6 +39,7 @@ struct MainTabView: View {
     @State private var selected: AppTab = .home
     @State private var showFullPlayer: Bool = false
     @State private var artistRoute: ArtistRoute?
+    @Namespace private var tabIndicator
 
     private var visibleTabs: [AppTab] {
         let isArtist = auth.currentUser?.role == .artist
@@ -113,7 +114,8 @@ struct MainTabView: View {
                 TabButton(
                     tab: tab,
                     isSelected: selected == tab,
-                    label: l10n.t(tab.labelKey)
+                    label: l10n.t(tab.labelKey),
+                    namespace: tabIndicator
                 ) {
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
                         selected = tab
@@ -122,27 +124,16 @@ struct MainTabView: View {
             }
         }
         .padding(.horizontal, AppSpacing.sm)
-        .padding(.vertical, 10)
-        .background(tabBarBackground)
-        .overlay(
-            Capsule().stroke(AppColors.border, lineWidth: 1)
+        .padding(.top, 10)
+        .padding(.bottom, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .fill(Color.black)
         )
-        .clipShape(Capsule())
+        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .shadow(color: Color.black.opacity(0.5), radius: 16, x: 0, y: 6)
         .padding(.horizontal, AppSpacing.lg)
         .padding(.bottom, AppSpacing.sm)
-    }
-
-    @ViewBuilder
-    private var tabBarBackground: some View {
-        if #available(iOS 26.0, *) {
-            Capsule()
-                .fill(.clear)
-                .glassEffect(.regular.tint(AppColors.bg.opacity(0.6)), in: Capsule())
-        } else {
-            Capsule()
-                .fill(AppColors.card.opacity(0.85))
-                .background(.ultraThinMaterial, in: Capsule())
-        }
     }
 }
 
@@ -150,30 +141,38 @@ private struct TabButton: View {
     let tab: AppTab
     let isSelected: Bool
     let label: String
+    let namespace: Namespace.ID
     let action: () -> Void
+
+    private static let inactiveColor = Color(hex: 0x555555)
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 2) {
+            VStack(spacing: 4) {
                 Image(systemName: tab.icon)
-                    .font(.system(size: 18, weight: .bold))
+                    .font(.system(size: 22, weight: .semibold))
                 Text(label)
                     .font(.system(size: 10, weight: .bold))
                     .lineLimit(1)
-            }
-            .foregroundStyle(isSelected ? AppColors.yellow : AppColors.textSecond)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 6)
-            .background(
-                Group {
+
+                // Active-tab indicator dot
+                ZStack {
                     if isSelected {
-                        Capsule().fill(AppColors.yellow.opacity(0.12))
+                        Circle()
+                            .fill(AppColors.yellow)
+                            .frame(width: 5, height: 5)
+                            .matchedGeometryEffect(id: "tabDot", in: namespace)
                     } else {
-                        Color.clear
+                        Circle()
+                            .fill(Color.clear)
+                            .frame(width: 5, height: 5)
                     }
                 }
-            )
-            .clipShape(Capsule())
+            }
+            .foregroundStyle(isSelected ? AppColors.yellow : Self.inactiveColor)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 4)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
