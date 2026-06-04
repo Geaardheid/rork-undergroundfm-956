@@ -9,6 +9,7 @@ struct HomeFeedView: View {
     @Bindable var l10n: L10n
     @State private var feed = FeedStore()
     @State private var path = NavigationPath()
+    @State private var showSearch: Bool = false
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -70,22 +71,39 @@ struct HomeFeedView: View {
                 await feed.loadAll()
             }
         }
+        .fullScreenCover(isPresented: $showSearch) {
+            SearchView(l10n: l10n)
+        }
     }
 
     // MARK: - Floating header (liquid glass on iOS 26)
 
     private var header: some View {
         HStack(alignment: .center) {
-            LogoView(style: .wordmark, size: 64)
+            Image("logo")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(height: 32)
+                .accessibilityLabel("UndergroundFM")
             Spacer()
             HStack(spacing: AppSpacing.md) {
-                headerIcon("magnifyingglass")
-                headerIcon("bell")
+                headerIcon("magnifyingglass") { showSearch = true }
+                headerIcon("bell") {}
             }
         }
         .padding(.horizontal, AppSpacing.lg)
         .padding(.vertical, AppSpacing.sm)
         .background(headerBackground)
+        .overlay(alignment: .bottom) { yellowGlowLine }
+    }
+
+    /// Dunne gele lijn met zachte glow onderaan de navigatiebalk.
+    private var yellowGlowLine: some View {
+        Rectangle()
+            .fill(AppColors.yellow)
+            .frame(height: 2)
+            .shadow(color: AppColors.yellow, radius: 8)
+            .shadow(color: AppColors.yellow.opacity(0.6), radius: 4)
     }
 
     @ViewBuilder
@@ -102,16 +120,16 @@ struct HomeFeedView: View {
         }
     }
 
-    private func headerIcon(_ name: String) -> some View {
-        Button(action: {}) {
+    private func headerIcon(_ name: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
             ZStack {
                 Circle()
                     .fill(AppColors.card.opacity(0.6))
                     .frame(width: 38, height: 38)
-                    .overlay(Circle().stroke(AppColors.border, lineWidth: 1))
+                    .overlay(Circle().stroke(AppColors.yellow.opacity(0.4), lineWidth: 1))
                 Image(systemName: name)
                     .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(AppColors.textPrimary)
+                    .foregroundStyle(AppColors.yellow)
             }
         }
         .buttonStyle(.plain)

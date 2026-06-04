@@ -187,6 +187,12 @@ final class L10n {
         "artist.follow": "Volgen",
         "artist.following": "Volgend",
         "artist.tracksTitle": "Tracks",
+
+        "search.placeholder": "Zoek artiesten en tracks…",
+        "search.empty": "Zoek artiesten en tracks…",
+        "search.noResults": "Geen resultaten gevonden",
+        "search.artists": "Artiesten",
+        "search.tracks": "Tracks",
     ]
 
     // MARK: - EN
@@ -312,6 +318,12 @@ final class L10n {
         "artist.follow": "Follow",
         "artist.following": "Following",
         "artist.tracksTitle": "Tracks",
+
+        "search.placeholder": "Search artists and tracks…",
+        "search.empty": "Search artists and tracks…",
+        "search.noResults": "No results found",
+        "search.artists": "Artists",
+        "search.tracks": "Tracks",
     ]
 
     // MARK: - ES
@@ -437,5 +449,11 @@ final class L10n {
         "artist.follow": "Seguir",
         "artist.following": "Siguiendo",
         "artist.tracksTitle": "Tracks",
+
+        "search.placeholder": "Busca artistas y tracks…",
+        "search.empty": "Busca artistas y tracks…",
+        "search.noResults": "No se encontraron resultados",
+        "search.artists": "Artistas",
+        "search.tracks": "Tracks",
     ]
 }
