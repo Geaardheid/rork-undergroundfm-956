@@ -127,9 +127,10 @@ struct MainTabView: View {
                     label: l10n.t(tab.labelKey),
                     namespace: tabIndicator
                 ) {
-                    withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
-                        selected = tab
-                    }
+                    // Geen withAnimation hier: dat zou de content-Group laten
+                    // crossfaden tussen schermen (je zag kort het vorige scherm,
+                    // bv. de gele upload-knop). De indicator animeert lokaal.
+                    selected = tab
                 }
             }
         }
@@ -160,6 +161,7 @@ private struct TabButton: View {
                     .fill(isSelected ? AppColors.yellow : Color.clear)
                     .frame(width: 16, height: 3)
                     .matchedGeometryEffect(id: "tabIndicator", in: namespace, isSource: isSelected)
+                    .animation(.spring(response: 0.35, dampingFraction: 0.75), value: isSelected)
 
                 Image(systemName: isSelected ? tab.activeIcon : tab.inactiveIcon)
                     .font(.system(size: 24, weight: isSelected ? .semibold : .regular))
