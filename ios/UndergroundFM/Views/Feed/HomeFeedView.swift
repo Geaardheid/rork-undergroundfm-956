@@ -10,6 +10,16 @@ struct HomeFeedView: View {
     @State private var feed = FeedStore()
     @State private var path = NavigationPath()
     @State private var showSearch: Bool = false
+    @State private var scrollOffset: CGFloat = 0
+
+    /// Drempel waarna de volledige header inklapt naar de compacte mini-header.
+    /// Ongeveer de hoogte van de featured banner zodat de collapse triggert
+    /// wanneer de banner voorbij scrollt.
+    private let collapseThreshold: CGFloat = 180
+
+    private var isCollapsed: Bool {
+        scrollOffset > collapseThreshold
+    }
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -63,11 +73,23 @@ struct HomeFeedView: View {
             .refreshable {
                 await feed.loadAll()
             }
+            .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                geometry.contentOffset.y + geometry.contentInsets.top
+            } action: { _, newValue in
+                scrollOffset = newValue
+            }
 
             VStack(spacing: 0) {
-                header
+                if isCollapsed {
+                    miniHeader
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                } else {
+                    header
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
                 fadeUnderHeader
             }
+            .animation(.easeInOut(duration: 0.25), value: isCollapsed)
         }
         .task {
             if feed.featured == nil {
@@ -89,6 +111,20 @@ struct HomeFeedView: View {
                     .aspectRatio(contentMode: .fit)
                     .frame(height: 32)
                     .accessibilityLabel("UndergroundFM")
+                Spacer()
+                HStack(spacing: AppSpacing.md) {
+                    headerIcon("magnifyingglass") { showSearch = true }
+                    headerIcon("bell") {}
+                }
+            }
+        }
+    }
+
+    /// Compacte sticky mini-header: alleen zoek- en notificatie-iconen op een
+    /// donkere achtergrond met de gele lijn. Verschijnt zodra de banner voorbij scrollt.
+    private var miniHeader: some View {
+        TabHeader {
+            HStack(alignment: .center) {
                 Spacer()
                 HStack(spacing: AppSpacing.md) {
                     headerIcon("magnifyingglass") { showSearch = true }
