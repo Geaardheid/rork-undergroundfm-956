@@ -515,13 +515,10 @@ private struct FloatingCoverStrip: View {
         VStack(spacing: AppSpacing.lg) {
             HStack(spacing: -24) {
                 ForEach(Array(tracks.enumerated()), id: \.element.id) { index, track in
-                    Button {
+                    FloatingCover(url: track.thumbnailUrl, highlighted: index == activeIndex) {
                         MusicPlayer.shared.load(track: track)
-                    } label: {
-                        FloatingCover(url: track.thumbnailUrl, highlighted: index == activeIndex)
-                            .rotationEffect(.degrees(angles[index % angles.count]))
                     }
-                    .buttonStyle(PressableScaleStyle())
+                    .rotationEffect(.degrees(angles[index % angles.count]))
                     .zIndex(index == activeIndex ? 10 : Double(index))
                 }
             }
@@ -558,9 +555,18 @@ private struct FloatingCoverStrip: View {
 private struct FloatingCover: View {
     let url: String?
     var highlighted: Bool = false
+    let onTap: () -> Void
     @State private var appeared: Bool = false
+    @State private var tapScale: CGFloat = 1
 
     var body: some View {
+        Button(action: handleTap) {
+            cover
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var cover: some View {
         Color(AppColors.card)
             .frame(width: 110, height: 110)
             .overlay {
@@ -585,7 +591,7 @@ private struct FloatingCover: View {
                     .stroke(AppColors.yellow.opacity(highlighted ? 0.9 : 0.5), lineWidth: highlighted ? 2 : 1.5)
             )
             .shadow(color: AppColors.yellow.opacity(highlighted ? 0.85 : 0.5), radius: highlighted ? 26 : 16)
-            .scaleEffect(highlighted ? 1.06 : (appeared ? 1 : 0.7))
+            .scaleEffect((highlighted ? 1.06 : (appeared ? 1 : 0.7)) * tapScale)
             .opacity(appeared ? 1 : 0)
             .animation(.spring(response: 0.45, dampingFraction: 0.7), value: highlighted)
             .onAppear {
@@ -593,6 +599,18 @@ private struct FloatingCover: View {
                     appeared = true
                 }
             }
+    }
+
+    private func handleTap() {
+        withAnimation(.easeInOut(duration: 0.12)) {
+            tapScale = 0.95
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.55)) {
+                tapScale = 1
+            }
+        }
+        onTap()
     }
 
     private var placeholder: some View {
