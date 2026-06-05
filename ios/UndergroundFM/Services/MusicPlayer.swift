@@ -19,6 +19,10 @@ final class MusicPlayer {
     var isPlaying: Bool = false
     var currentTime: TimeInterval = 0
     var duration: TimeInterval = 0
+    /// Cover art of the current track, loaded for the lock screen and share sheet.
+    var artwork: UIImage?
+    /// When enabled, the current track repeats instead of advancing the queue.
+    var isRepeatEnabled: Bool = false
 
     // MARK: - Queue
     var queue: [Track] = []
@@ -250,6 +254,12 @@ final class MusicPlayer {
         ) { [weak self] _ in
             guard let self else { return }
             ViewTracker.shared.endSession()
+            // Repeat the current track when repeat is enabled.
+            if self.isRepeatEnabled {
+                self.seek(to: 0)
+                self.play()
+                return
+            }
             // Auto-advance to the next queued track; stop if this was the last.
             if self.currentQueueIndex + 1 < self.queue.count {
                 self.playNext()
@@ -353,6 +363,7 @@ final class MusicPlayer {
     /// Fetch the cover art and attach it as lock screen artwork.
     private func loadArtwork(from urlString: String?) {
         artworkTask?.cancel()
+        artwork = nil
         guard let urlString, let url = URL(string: urlString) else { return }
         artworkTask = Task { [weak self] in
             guard let (data, _) = try? await URLSession.shared.data(from: url),
@@ -360,9 +371,10 @@ final class MusicPlayer {
             if Task.isCancelled { return }
             await MainActor.run {
                 guard let self, self.currentTrack?.thumbnailUrl == urlString else { return }
-                let artwork = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
+                self.artwork = image
+                let mpArtwork = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
                 var info = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [String: Any]()
-                info[MPMediaItemPropertyArtwork] = artwork
+                info[MPMediaItemPropertyArtwork] = mpArtwork
                 MPNowPlayingInfoCenter.default().nowPlayingInfo = info
             }
         }

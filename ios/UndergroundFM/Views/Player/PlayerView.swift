@@ -22,7 +22,6 @@ struct PlayerView: View {
     @State private var isLiked: Bool = false
     @State private var likeBusy: Bool = false
     @State private var isShuffle: Bool = false
-    @State private var isRepeat: Bool = false
 
     private enum PlayerTab { case audio, clip }
 
@@ -238,14 +237,49 @@ struct PlayerView: View {
 
             Spacer()
 
-            ShareLink(item: shareText) {
+            Button {
+                presentShareSheet()
+            } label: {
                 Image(systemName: "square.and.arrow.up")
                     .font(.system(size: 21, weight: .medium))
                     .foregroundStyle(AppColors.textSecond)
                     .frame(width: 44, height: 44)
             }
+            .buttonStyle(.plain)
             .disabled(player.currentTrack == nil)
         }
+    }
+
+    /// Build the activity items (artwork, message, deep link) and present a
+    /// UIActivityViewController on the key window's top-most controller.
+    private func presentShareSheet() {
+        guard let track = player.currentTrack,
+              let deepLink = URL(string: "undergroundfm://track/\(track.id)") else { return }
+
+        let image = player.artwork ?? UIImage(named: "AppIcon")
+        var items: [Any] = []
+        if let image { items.append(image) }
+        items.append(shareText)
+        items.append(deepLink)
+
+        let activityVC = UIActivityViewController(activityItems: items, applicationActivities: nil)
+
+        guard let scene = UIApplication.shared.connectedScenes
+            .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene,
+              let root = scene.windows.first(where: { $0.isKeyWindow })?.rootViewController else { return }
+
+        var presenter = root
+        while let presented = presenter.presentedViewController {
+            presenter = presented
+        }
+
+        if let pop = activityVC.popoverPresentationController {
+            pop.sourceView = presenter.view
+            pop.sourceRect = CGRect(x: presenter.view.bounds.midX, y: presenter.view.bounds.midY, width: 0, height: 0)
+            pop.permittedArrowDirections = []
+        }
+
+        presenter.present(activityVC, animated: true)
     }
 
     private var shareText: String {
@@ -345,11 +379,11 @@ struct PlayerView: View {
             Spacer()
 
             Button {
-                isRepeat.toggle()
+                player.isRepeatEnabled.toggle()
             } label: {
-                Image(systemName: isRepeat ? "repeat.1" : "repeat")
+                Image(systemName: player.isRepeatEnabled ? "repeat.1" : "repeat")
                     .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(isRepeat ? AppColors.yellow : AppColors.textSecond)
+                    .foregroundStyle(player.isRepeatEnabled ? AppColors.yellow : AppColors.textSecond)
             }
             .buttonStyle(.plain)
         }
