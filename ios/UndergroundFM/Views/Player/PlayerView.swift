@@ -430,6 +430,11 @@ struct PlayerView: View {
                         .foregroundStyle(AppColors.textPrimary)
                         .lineLimit(1)
                 }
+
+                scrubber
+
+                controls
+
                 Spacer()
             }
             .padding(.horizontal, AppSpacing.lg)
