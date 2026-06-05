@@ -40,7 +40,7 @@ final class SubscriptionService {
 
     /// De web Payment Link waar niet-abonnees naartoe gestuurd worden.
     /// Spotify-model: betalen buiten de app, geen in-app purchase.
-    let paymentLinkURL = URL(string: "https://undergroundfm.app/subscribe")!
+    let paymentLinkURL = URL(string: "https://undergroundapp.pages.dev")!
 
     private init() {}
 
