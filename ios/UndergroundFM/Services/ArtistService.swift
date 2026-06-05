@@ -77,6 +77,20 @@ final class ArtistService {
         let isFounding = code.hasPrefix("FOUNDING") || code.hasPrefix("FA")
         let sharePct = isFounding ? 0.60 : 0.50
 
+        // Claim de invite code als plain UPDATE van de bestaande rij — vóór de
+        // upgrade, zodat een mislukte claim geen half-geüpgrade gebruiker achterlaat.
+        let newCount = (inviteRow.useCount ?? 0) + 1
+        try await sb.update(
+            table: "invite_codes",
+            query: ["code": "eq.\(code)"],
+            values: [
+                "used_by": userId,
+                "used_at": ISO8601DateFormatter().string(from: Date()),
+                "use_count": newCount
+            ],
+            accessToken: accessToken
+        )
+
         var values: [String: Any] = [
             "user_id": userId,
             "artist_name": trimmedName,
@@ -106,19 +120,6 @@ final class ArtistService {
             values: [
                 "role": "artist",
                 "is_founding_artist": isFounding
-            ],
-            accessToken: accessToken
-        )
-
-        // Claim de invite code (use count ophogen).
-        let newCount = (inviteRow.useCount ?? 0) + 1
-        try await sb.update(
-            table: "invite_codes",
-            query: ["code": "eq.\(code)"],
-            values: [
-                "used_by": userId,
-                "used_at": ISO8601DateFormatter().string(from: Date()),
-                "use_count": newCount
             ],
             accessToken: accessToken
         )
