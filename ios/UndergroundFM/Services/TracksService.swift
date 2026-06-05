@@ -27,6 +27,18 @@ final class TracksService {
         return try await sb.select(Track.self, from: "tracks", query: query, accessToken: token)
     }
 
+    /// Eén track ophalen op id (voor deep links naar een gedeelde track).
+    func fetchTrack(id: String) async throws -> Track? {
+        let token = SessionStore.shared.session?.accessToken
+        let query: [String: String] = [
+            "select": "*,artists(artist_name)",
+            "id": "eq.\(id)",
+            "limit": "1"
+        ]
+        let rows = try await sb.select(Track.self, from: "tracks", query: query, accessToken: token)
+        return rows.first
+    }
+
     /// Top trending track over alle genres (voor featured banner).
     func fetchFeatured() async throws -> Track? {
         let token = SessionStore.shared.session?.accessToken

@@ -1,23 +1,23 @@
-# Fix 5 profile & feed UI bugs
+# Autoplay queue, share sheet, and featured banner empty-state fix
 
-Five focused fixes in existing screens only — no new screens or features.
+Three additions to the music app, all wired through the existing player and feed.
 
-**1. Bell icon does nothing (home header)**
-- Remove the non-working bell button from the top of the home screen. The search icon stays. Notifications aren't built yet, so hiding it is the cleanest fix.
+**Feature 1 — Autoplay queue**
+- The player now remembers a list of tracks (a "queue") and which one is playing.
+- When you tap a track in a genre section (on the home feed or the full genre list), the whole section becomes the queue automatically — so when one song ends, the next one starts playing on its own.
+- Tapping a single track elsewhere still works exactly as before (it just plays that one track).
+- When a track finishes, it automatically advances to the next track in the queue. If it's the last one, playback stops as it does today.
+- The lock-screen / control-center "next" and "previous" buttons now move through the queue instead of just skipping 15 seconds.
 
-**2. Artist name not editable (profile)**
-- In the artist profile, add an editable "Artist name" field next to the existing bio editor (toggled by the same Edit button).
-- Saving updates the artist's display name everywhere it appears, keeping the account name and artist name in sync.
-- New label text added in Dutch ("Artiestennaam"), English ("Artist name") and Spanish ("Nombre artístico").
+**Feature 2 — Share sheet**
+- The share button on the full-screen player now shares a friendly message — "Listen to [title] by [artist] on UndergroundFM" — together with a link to the track.
+- The link uses the app's own address format so that tapping it on a device opens the app.
+- When someone opens a shared track link, the app fetches that track and starts playing it right away.
 
-**3. Instagram handle not editable (profile)**
-- Add an editable Instagram field in the same profile edit section, using the existing Instagram label.
-- Saving updates the artist's Instagram link, which then shows as a tappable handle on the profile.
+**Feature 3 — Featured banner empty state**
+- On the home feed, when there's no featured track to show (and it's finished loading), the featured banner is hidden completely instead of leaving an empty gap at the top.
 
-**4. "Loading failed" on empty genre sections**
-- When a genre row simply has no tracks (not an actual error), show the friendly "no tracks yet" empty state instead of an error. Real network/server errors will still show the error state.
-
-**5. Mini player covers the "Become artist" button**
-- On the "Become artist" form, add bottom spacing so the submit button always sits above the persistent mini player and stays fully tappable. The mini player is not hidden.
-
-After the changes I'll run the iOS build checks to confirm everything compiles.
+**Notes**
+- No new screens, no payment or unrelated changes.
+- All texts already exist in Dutch, English, and Spanish.
+- I'll run the build checks when done.

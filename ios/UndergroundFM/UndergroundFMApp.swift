@@ -28,6 +28,14 @@ struct UndergroundFMApp: App {
                     switch url.host {
                     case "payment-success":
                         Task { await subscription.refresh() }
+                    case "track":
+                        // undergroundfm://track/<id> — open en speel de gedeelde track.
+                        guard let id = url.pathComponents.last(where: { $0 != "/" }) else { return }
+                        Task {
+                            if let track = try? await TracksService.shared.fetchTrack(id: id) {
+                                MusicPlayer.shared.load(track: track)
+                            }
+                        }
                     default:
                         Task { await auth.restoreSession() }
                     }

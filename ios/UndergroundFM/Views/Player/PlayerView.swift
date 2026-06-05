@@ -251,7 +251,9 @@ struct PlayerView: View {
     private var shareText: String {
         let title = player.currentTrack?.title ?? ""
         let artist = player.currentTrack?.artistName ?? ""
-        return String(format: l10n.t("player.shareText"), title, artist)
+        let message = String(format: l10n.t("player.shareText"), title, artist)
+        guard let id = player.currentTrack?.id else { return message }
+        return "\(message)\n\nundergroundfm://track/\(id)"
     }
 
     // MARK: - Scrubber

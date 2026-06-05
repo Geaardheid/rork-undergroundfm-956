@@ -51,9 +51,9 @@ struct GenreDetailView: View {
             emptyState
         } else {
             LazyVStack(spacing: AppSpacing.sm) {
-                ForEach(tracks) { track in
+                ForEach(Array(tracks.enumerated()), id: \.element.id) { index, track in
                     Button {
-                        MusicPlayer.shared.load(track: track)
+                        MusicPlayer.shared.setQueue(tracks, startingAt: index)
                     } label: {
                         GenreTrackRow(
                             track: track,

@@ -20,6 +20,10 @@ final class MusicPlayer {
     var currentTime: TimeInterval = 0
     var duration: TimeInterval = 0
 
+    // MARK: - Queue
+    var queue: [Track] = []
+    var currentQueueIndex: Int = 0
+
     private var player: AVPlayer?
     private var timeObserver: Any?
     private var statusObserver: NSKeyValueObservation?
@@ -95,6 +99,32 @@ final class MusicPlayer {
 
     var hasTrack: Bool { currentTrack != nil }
 
+    // MARK: - Queue
+
+    /// Set the full queue and immediately start the track at `index`.
+    func setQueue(_ tracks: [Track], startingAt index: Int) {
+        guard !tracks.isEmpty, index >= 0, index < tracks.count else { return }
+        queue = tracks
+        currentQueueIndex = index
+        loadFromQueue(tracks[index])
+    }
+
+    /// Advance to the next track in the queue, if one exists.
+    func playNext() {
+        let next = currentQueueIndex + 1
+        guard next < queue.count else { return }
+        currentQueueIndex = next
+        loadFromQueue(queue[next])
+    }
+
+    /// Go to the previous track in the queue, if one exists.
+    func playPrevious() {
+        let prev = currentQueueIndex - 1
+        guard prev >= 0, prev < queue.count else { return }
+        currentQueueIndex = prev
+        loadFromQueue(queue[prev])
+    }
+
     // MARK: - Load
 
     func load(track: Track) {
@@ -102,7 +132,15 @@ final class MusicPlayer {
             togglePlayPause()
             return
         }
+        // Direct single-track playback still behaves as a one-item queue.
+        queue = [track]
+        currentQueueIndex = 0
+        loadFromQueue(track)
+    }
 
+    /// Internal loader shared by queue and direct playback. Does not touch
+    /// `queue`/`currentQueueIndex` so callers control queue semantics.
+    private func loadFromQueue(_ track: Track) {
         clear()
 
         guard let urlStr = track.audioUrl, let url = URL(string: urlStr) else { return }
@@ -212,8 +250,13 @@ final class MusicPlayer {
         ) { [weak self] _ in
             guard let self else { return }
             ViewTracker.shared.endSession()
-            self.isPlaying = false
-            self.currentTime = 0
+            // Auto-advance to the next queued track; stop if this was the last.
+            if self.currentQueueIndex + 1 < self.queue.count {
+                self.playNext()
+            } else {
+                self.isPlaying = false
+                self.currentTime = 0
+            }
         }
     }
 
@@ -255,14 +298,16 @@ final class MusicPlayer {
         center.nextTrackCommand.isEnabled = true
         center.nextTrackCommand.addTarget { [weak self] _ in
             guard let self, self.currentTrack != nil else { return .commandFailed }
-            self.skipForward()
+            guard self.currentQueueIndex + 1 < self.queue.count else { return .noSuchContent }
+            self.playNext()
             return .success
         }
 
         center.previousTrackCommand.isEnabled = true
         center.previousTrackCommand.addTarget { [weak self] _ in
             guard let self, self.currentTrack != nil else { return .commandFailed }
-            self.skipBackward()
+            guard self.currentQueueIndex - 1 >= 0 else { return .noSuchContent }
+            self.playPrevious()
             return .success
         }
 

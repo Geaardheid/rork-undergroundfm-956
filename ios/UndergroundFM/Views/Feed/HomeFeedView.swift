@@ -27,16 +27,20 @@ struct HomeFeedView: View {
     private var content: some View {
         FloatingHeaderScreen(header: { header }, onRefresh: { await feed.loadAll() }) {
             LazyVStack(alignment: .leading, spacing: AppSpacing.xxl) {
-                FeaturedBanner(
-                    track: feed.featured,
-                    isLoading: feed.isFeaturedLoading,
-                    l10n: l10n,
-                    onTap: {
-                        if let track = feed.featured {
-                            MusicPlayer.shared.load(track: track)
-                        }
-                    }
-                )
+                if let track = feed.featured {
+                    FeaturedBanner(
+                        track: track,
+                        isLoading: false,
+                        l10n: l10n,
+                        onTap: { MusicPlayer.shared.load(track: track) }
+                    )
+                } else if feed.isFeaturedLoading {
+                    FeaturedBanner(
+                        track: nil,
+                        isLoading: true,
+                        l10n: l10n
+                    )
+                }
 
                 ForEach(GenreSection.all) { section in
                     GenreRow(
@@ -44,7 +48,13 @@ struct HomeFeedView: View {
                         state: feed.state(for: section.id),
                         l10n: l10n,
                         onSelectTrack: { track in
-                            MusicPlayer.shared.load(track: track)
+                            // De volledige sectie wordt de wachtrij; speel vanaf de getikte track.
+                            if case .loaded(let tracks) = feed.state(for: section.id),
+                               let index = tracks.firstIndex(where: { $0.id == track.id }) {
+                                MusicPlayer.shared.setQueue(tracks, startingAt: index)
+                            } else {
+                                MusicPlayer.shared.load(track: track)
+                            }
                         },
                         onSelectArtist: { track in
                             path.append(ArtistRoute(artistId: track.artistId, artistName: track.artistName))
