@@ -22,7 +22,7 @@ struct ClipPlayerView: View {
     @State private var didStartSyncedPlayback: Bool = false
 
     /// Maximaal toegestane drift (s) voordat de video opnieuw wordt gesynct.
-    private let driftTolerance: TimeInterval = 0.1
+    private let driftTolerance: TimeInterval = 0.25
 
     init(url: URL) {
         self.url = url
@@ -112,7 +112,7 @@ struct ClipPlayerView: View {
         }
 
         // Periodieke observer corrigeert kleine drift tijdens het afspelen.
-        let interval = CMTime(seconds: 0.5, preferredTimescale: 600)
+        let interval = CMTime(seconds: 1.0, preferredTimescale: 600)
         syncObserver = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { _ in
             guard didStartSyncedPlayback else { return }
             correctDriftIfNeeded()
