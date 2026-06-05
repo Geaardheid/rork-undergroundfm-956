@@ -67,6 +67,13 @@ final class ViewTracker {
             return
         }
 
+        // Preview-only luisterbeurten van niet-abonnees tellen niet als volledige
+        // stream: sla de Supabase-insert over wanneer minder dan 30s is geluisterd.
+        if currentTime < 30 && !SubscriptionService.shared.isSubscribed {
+            reset()
+            return
+        }
+
         let completionPct = min(currentTime / duration, 1.0)
         let weightedScore = Self.calculateWeightedScore(completionPct: completionPct)
         let secondsWatched = Int64(currentTime)

@@ -10,6 +10,8 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(AuthStore.self) private var auth
+    @Environment(SubscriptionService.self) private var subscription
+    @Environment(\.openURL) private var openURL
     @Environment(\.dismiss) private var dismiss
     @Bindable var l10n: L10n
     @State private var settings = AppSettings.shared
@@ -28,6 +30,7 @@ struct SettingsView: View {
 
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: AppSpacing.xl) {
+                    subscriptionSection
                     accountSection
                     audioSection
                     notificationsSection
@@ -65,6 +68,61 @@ struct SettingsView: View {
                 .presentationBackground(AppColors.bg)
         }
         .task { await loadFollowedArtists() }
+    }
+
+    // MARK: - Abonnement
+
+    @ViewBuilder
+    private var subscriptionSection: some View {
+        SettingsSection(title: l10n.t("settings.subSection")) {
+            if auth.currentUser?.role == .artist {
+                subscriptionRow(
+                    icon: "checkmark.seal.fill",
+                    title: l10n.t("settings.subArtist"),
+                    subtitle: l10n.t("settings.subArtistHint")
+                )
+            } else if subscription.isSubscribed {
+                subscriptionRow(
+                    icon: "bolt.fill",
+                    title: "\(l10n.t("settings.subStatus")): \(l10n.t("settings.subActive"))"
+                )
+                SettingsDivider()
+                SettingsRow(icon: "creditcard.fill", title: l10n.t("settings.subManage")) {
+                    Task { await subscription.openManageSubscription { openURL($0) } }
+                }
+            } else {
+                subscriptionRow(
+                    icon: "lock.fill",
+                    title: "\(l10n.t("settings.subStatus")): \(l10n.t("settings.subInactive"))"
+                )
+                SettingsDivider()
+                SettingsRow(icon: "star.fill", title: l10n.t("settings.subJoin")) {
+                    subscription.showPaywall = true
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func subscriptionRow(icon: String, title: String, subtitle: String? = nil) -> some View {
+        HStack(spacing: AppSpacing.md) {
+            Image(systemName: icon)
+                .font(.system(size: 16, weight: .bold))
+                .foregroundStyle(AppColors.yellow)
+                .frame(width: 24)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: AppFontSize.base, weight: .semibold))
+                    .foregroundStyle(AppColors.textPrimary)
+                if let subtitle {
+                    Text(subtitle)
+                        .font(.system(size: AppFontSize.sm, weight: .medium))
+                        .foregroundStyle(AppColors.textMuted)
+                }
+            }
+            Spacer()
+        }
+        .padding(AppSpacing.md)
     }
 
     // MARK: - Account

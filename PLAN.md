@@ -1,17 +1,41 @@
-# Search empty state — Spotify-inspired Underground FM discover
+# Add 30-second preview limit, paywall gates, and subscription management
 
-## Overview
-A packed, scrollable discover screen on the search tab before typing, in Underground FM black/yellow. All existing search behaviour stays exactly as-is.
+## What this does
 
-## Empty state (before typing)
-- **Floating cover strip** — 3 skewed covers (110×110) in a horizontal strip at the top with yellow glow. Below them the current track title (bold white) + artist (yellow) crossfade between covers every few seconds. Covers are tappable → play the track.
-- **Verken genres** — 2-column grid of rectangular tiles. Each tile has a dark gradient with a per-genre colour tint (Rap red, Drill blue, Afro green, Trap purple, R&B orange, House teal), the most-played track cover as a background image with dark overlay, genre name bold white top-left, emoji large bottom-right, rounded corners. Tapping opens the genre track list.
-- **⚡ Nieuwe artiesten** — horizontal scroll of recently joined artists (round avatar, name, founding badge).
-- **🔥 Recent geüpload** — horizontal scroll of recently uploaded tracks (square cover, title, artist).
-- No empty space; the screen scrolls and feels full.
+Free listeners can browse the whole app but only hear the first 30 seconds of any track. Once the preview ends, the paywall appears. Artists always get full access. Subscribers can manage their plan from Settings.
 
-## Search results (while typing) — unchanged
-- Track rows and artist rows keep their existing look and behaviour.
+## Features
 
-## Out of scope (left untouched)
-- Search logic, the music player, sign-in/auth, and every other screen.
+- **30-second preview for free users** — playback automatically stops at 30 seconds and the paywall slides up. This applies everywhere a track plays (main player, mini player, synced clip player) from one central place.
+- **Artists are exempt** — anyone with an artist account always has unlimited playback and never sees the preview cutoff.
+- **Preview listens don't count as plays** — a clip that's stopped before 30 seconds by a non-subscriber won't be logged as a real stream.
+- **"Preview ended" paywall** — when the paywall appears because the preview ran out, a small yellow "PREVIEW VOORBIJ" label shows above the lightning bolt, so the moment feels intentional rather than abrupt.
+- **Mini player lock** — as the preview reaches its end for a free user, the play button on the mini player turns into a yellow lock. Tapping the lock (or the mini player row) opens the paywall.
+- **Subscription section in Settings** — a new "Abonnement" / "Subscription" section:
+  - Free user: shows "Geen abonnement" with a "Word lid" button that opens the paywall.
+  - Subscriber: shows "Actief" with an "Abonnement beheren" button that opens the Stripe customer portal in the browser.
+  - Artist: shows "Account: Artiest" with "Volledige toegang" and no buttons.
+- **Graceful for logged-out users** — if no one is signed in, the preview cutoff never triggers the paywall; the normal sign-in flow handles it.
+
+## Design
+
+- The "PREVIEW VOORBIJ" label is small, uppercase, yellow, with wide letter spacing, sitting just above the bolt icon — matches the existing Underground FM black/yellow look.
+- The mini player lock uses a yellow filled lock icon in the same spot as the play button, so the bar layout stays identical.
+- The Settings subscription section reuses the existing settings card styling (rounded card, dividers, yellow accents) so it blends in with the other sections.
+
+## Notes
+
+- The "Abonnement beheren" button calls a server function (Stripe customer portal). I'll build the app-side call and have it gracefully fall back to opening the paywall if the server isn't reachable yet. The actual Stripe/server function can be wired up separately later.
+- All subscription logic stays centralized in one service so the future Android version only needs that one piece rebuilt.
+- New wording will be added in Dutch, English, and Spanish.
+
+## Screens touched
+
+- Music playback engine (preview cutoff)
+- Play-tracking logic (skip logging short previews)
+- Paywall screen (preview-ended label)
+- Mini player bar (lock state)
+- Settings screen (new subscription section)  
+  
+The Edge Function `create-portal-session` is already deployed at `https://qpawgtxbjatyfngvaayy.supabase.co/functions/v1/create-portal-session` — wire it up directly, no fallback needed."
+

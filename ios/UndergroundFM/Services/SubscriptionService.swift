@@ -24,6 +24,11 @@ nonisolated struct SubscriptionStatusRow: Decodable {
     }
 }
 
+/// Antwoord van de `create-portal-session` Edge Function (Stripe Customer Portal).
+nonisolated struct PortalSessionResponse: Decodable {
+    let url: String
+}
+
 @MainActor
 @Observable
 final class SubscriptionService {
@@ -42,6 +47,9 @@ final class SubscriptionService {
     /// Spotify-model: betalen buiten de app, geen in-app purchase.
     let paymentLinkURL = URL(string: "https://undergroundapp.pages.dev")!
 
+    /// Hoeveel seconden een niet-abonnee per track mag beluisteren (preview-modus).
+    let previewLimit: TimeInterval = 30
+
     private init() {}
 
     /// Koppel de AuthStore (één keer bij app-start) zodat de status uit de geladen
@@ -50,10 +58,13 @@ final class SubscriptionService {
         self.auth = auth
     }
 
-    /// Enige bron van waarheid: alleen `active` telt als geabonneerd.
-    /// Alles anders (nil, trial, expired, past_due, canceled, inactive) → niet.
+    /// Enige bron van waarheid: artiesten hebben altijd volledige toegang;
+    /// voor de rest telt alleen `active` als geabonneerd. Alles anders
+    /// (nil, trial, expired, past_due, canceled, inactive) → niet.
     var isSubscribed: Bool {
-        auth?.currentUser?.subscriptionStatus == "active"
+        guard let user = auth?.currentUser else { return false }
+        if user.role == .artist { return true }
+        return user.subscriptionStatus == "active"
     }
 
     /// Haal `subscription_status` opnieuw op voor de huidige auth.uid() en werk de
@@ -101,5 +112,41 @@ final class SubscriptionService {
     /// Open de web Payment Link in de browser (Spotify-model).
     func openPaymentLink(using open: (URL) -> Void) {
         open(paymentLinkURL)
+    }
+
+    /// Open de Stripe Customer Portal zodat een abonnee zijn abonnement kan beheren.
+    /// Roept de `create-portal-session` Edge Function aan (POST, met het access token
+    /// in de Authorization-header) en opent de teruggegeven url in de browser.
+    /// Bij een fout valt het terug op het tonen van de paywall.
+    func openManageSubscription(using open: @escaping (URL) -> Void) async {
+        let base = SupabaseConfig.url
+        guard !base.isEmpty,
+              let token = SessionStore.shared.session?.accessToken,
+              let endpoint = URL(string: "\(base)/functions/v1/create-portal-session") else {
+            showPaywall = true
+            return
+        }
+
+        var req = URLRequest(url: endpoint)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue(SupabaseConfig.anonKey, forHTTPHeaderField: "apikey")
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: req)
+            guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+                showPaywall = true
+                return
+            }
+            let result = try JSONDecoder().decode(PortalSessionResponse.self, from: data)
+            guard let portalURL = URL(string: result.url) else {
+                showPaywall = true
+                return
+            }
+            open(portalURL)
+        } catch {
+            showPaywall = true
+        }
     }
 }

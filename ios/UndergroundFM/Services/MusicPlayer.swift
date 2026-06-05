@@ -184,6 +184,13 @@ final class MusicPlayer {
             guard let self else { return }
             self.currentTime = time.seconds
             ViewTracker.shared.tick(currentTime: time.seconds, duration: self.duration)
+
+            // Preview-modus: niet-abonnees mogen maar 30s per track horen.
+            // Centrale cutoff op spelerniveau — werkt voor audio, mini player en clip.
+            if !SubscriptionService.shared.isSubscribed && self.currentTime >= 30 {
+                self.pause()
+                SubscriptionService.shared.showPaywall = true
+            }
         }
 
         statusObserver = playerItem.observe(\.status, options: [.new]) { [weak self] item, _ in

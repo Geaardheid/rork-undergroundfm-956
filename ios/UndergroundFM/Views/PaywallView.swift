@@ -16,6 +16,10 @@ struct PaywallView: View {
     @Environment(\.dismiss) private var dismiss
     @Bindable var l10n: L10n
 
+    /// Wanneer de paywall verschijnt doordat de 30s-preview afliep, tonen we een
+    /// extra "PREVIEW VOORBIJ"-label boven het bliksem-icoon.
+    var triggeredByPreview: Bool = false
+
     @State private var isRefreshing: Bool = false
 
     private let perks: [(icon: String, key: String)] = [
@@ -71,6 +75,14 @@ struct PaywallView: View {
 
     private var hero: some View {
         VStack(spacing: AppSpacing.lg) {
+            if triggeredByPreview {
+                Text(l10n.t("paywall.previewEnded"))
+                    .font(.system(size: AppFontSize.xs, weight: .heavy))
+                    .tracking(2.5)
+                    .textCase(.uppercase)
+                    .foregroundStyle(AppColors.yellow)
+            }
+
             ZStack {
                 Circle()
                     .fill(AppColors.yellow.opacity(0.12))

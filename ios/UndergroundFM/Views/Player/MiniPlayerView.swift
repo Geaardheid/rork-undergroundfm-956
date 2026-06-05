@@ -12,6 +12,11 @@ struct MiniPlayerView: View {
     @Bindable var player: MusicPlayer
     @Binding var showFullPlayer: Bool
 
+    /// Preview-grens bereikt voor een niet-abonnee: toon een slot i.p.v. afspelen.
+    private var isLocked: Bool {
+        !SubscriptionService.shared.isSubscribed && player.currentTime >= 29.5
+    }
+
     var body: some View {
         if player.hasTrack {
             VStack(spacing: 0) {
@@ -27,7 +32,11 @@ struct MiniPlayerView: View {
 
                 // Player bar
                 Button {
-                    showFullPlayer = true
+                    if isLocked {
+                        SubscriptionService.shared.showPaywall = true
+                    } else {
+                        showFullPlayer = true
+                    }
                 } label: {
                     HStack(spacing: AppSpacing.md) {
                         // Album artwork
@@ -47,27 +56,40 @@ struct MiniPlayerView: View {
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
 
-                        // Play/pause
-                        Button {
-                            player.togglePlayPause()
-                        } label: {
-                            Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
-                                .font(.system(size: 22, weight: .medium))
-                                .foregroundStyle(AppColors.yellow)
-                                .frame(width: 44, height: 44)
-                        }
-                        .buttonStyle(.plain)
+                        if isLocked {
+                            // Slot: opent de paywall.
+                            Button {
+                                SubscriptionService.shared.showPaywall = true
+                            } label: {
+                                Image(systemName: "lock.fill")
+                                    .font(.system(size: 20, weight: .bold))
+                                    .foregroundStyle(AppColors.yellow)
+                                    .frame(width: 44, height: 44)
+                            }
+                            .buttonStyle(.plain)
+                        } else {
+                            // Play/pause
+                            Button {
+                                player.togglePlayPause()
+                            } label: {
+                                Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
+                                    .font(.system(size: 22, weight: .medium))
+                                    .foregroundStyle(AppColors.yellow)
+                                    .frame(width: 44, height: 44)
+                            }
+                            .buttonStyle(.plain)
 
-                        // Skip forward
-                        Button {
-                            player.skipForward()
-                        } label: {
-                            Image(systemName: "forward.fill")
-                                .font(.system(size: 18, weight: .medium))
-                                .foregroundStyle(AppColors.textSecond)
-                                .frame(width: 44, height: 44)
+                            // Skip forward
+                            Button {
+                                player.skipForward()
+                            } label: {
+                                Image(systemName: "forward.fill")
+                                    .font(.system(size: 18, weight: .medium))
+                                    .foregroundStyle(AppColors.textSecond)
+                                    .frame(width: 44, height: 44)
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
                     .padding(.horizontal, AppSpacing.lg)
                     .padding(.vertical, AppSpacing.sm)

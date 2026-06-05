@@ -85,7 +85,7 @@ struct MainTabView: View {
             .presentationBackground(.black)
         }
         .sheet(isPresented: paywallBinding) {
-            PaywallView(l10n: l10n)
+            PaywallView(l10n: l10n, triggeredByPreview: MusicPlayer.shared.currentTime >= 30)
                 .presentationBackground(AppColors.bg)
         }
         .sheet(item: $artistRoute) { route in
