@@ -23,9 +23,14 @@ struct UndergroundFMApp: App {
                     await auth.restoreSession()
                 }
                 .onOpenURL { url in
-                    // Deep link na e-mailbevestiging: undergroundfm://auth/callback
+                    // Deep links: undergroundfm://payment-success of auth/callback
                     guard url.scheme?.lowercased() == "undergroundfm" else { return }
-                    Task { await auth.restoreSession() }
+                    switch url.host {
+                    case "payment-success":
+                        Task { await subscription.refresh() }
+                    default:
+                        Task { await auth.restoreSession() }
+                    }
                 }
         }
         .onChange(of: scenePhase) { _, newPhase in
