@@ -1,23 +1,33 @@
-# Autoplay queue, share sheet, and featured banner empty-state fix
+# Rework the Library tab into a visual hybrid layout
 
-Three additions to the music app, all wired through the existing player and feed.
+A UI-only redesign of the Library tab. All data loading stays exactly as it is — only the look and layout change. Top to bottom, the new Library screen will be:
 
-**Feature 1 — Autoplay queue**
-- The player now remembers a list of tracks (a "queue") and which one is playing.
-- When you tap a track in a genre section (on the home feed or the full genre list), the whole section becomes the queue automatically — so when one song ends, the next one starts playing on its own.
-- Tapping a single track elsewhere still works exactly as before (it just plays that one track).
-- When a track finishes, it automatically advances to the next track in the queue. If it's the last one, playback stops as it does today.
-- The lock-screen / control-center "next" and "previous" buttons now move through the queue instead of just skipping 15 seconds.
+**1. Living hero header**
+- A layered "cover collage" of floating album covers pulled from your liked tracks, with the bold title "Bibliotheek" / "Library" overlaid.
+- Covers fade in and gently drift, reusing the same alive-but-purposeful animation style from the Search screen.
+- If you have fewer than 4 liked tracks, it falls back to a clean yellow-accented gradient header instead.
+- A small "+" button stays in the header to create a new playlist.
 
-**Feature 2 — Share sheet**
-- The share button on the full-screen player now shares a friendly message — "Listen to [title] by [artist] on UndergroundFM" — together with a link to the track.
-- The link uses the app's own address format so that tapping it on a device opens the app.
-- When someone opens a shared track link, the app fetches that track and starts playing it right away.
+**2. 2×2 shortcut grid**
+Four large tappable cards, each with a bold label and yellow accent:
+- **Geliket** (heart) — background shows your most recent liked track's cover; opens your liked songs.
+- **Laatst geluisterd** (clock) — shows your most recently played track's cover; opens recently-played tracks.
+- **Playlists** (list) — a small cover collage of your playlists; opens your playlists.
+- **Artiesten** (two people) — a collage of followed-artist avatars; opens your followed artists.
+- Cards with no content show just their icon on a card background. Each card presses down slightly when tapped.
 
-**Feature 3 — Featured banner empty state**
-- On the home feed, when there's no featured track to show (and it's finished loading), the featured banner is hidden completely instead of leaving an empty gap at the top.
+**3. "Gelikte nummers" auto-playlist screen**
+Tapping **Geliket** opens a playlist-style screen titled "Gelikte nummers" / "Liked songs" / "Canciones que te gustan" listing all your liked tracks, with an "Alles afspelen" button that plays them all as a queue.
 
-**Notes**
-- No new screens, no payment or unrelated changes.
-- All texts already exist in Dutch, English, and Spanish.
-- I'll run the build checks when done.
+**4. Recent tracks strip**
+Below the grid, a horizontal scroll of your recently played tracks as cover cards — tap any to play instantly. Titled "Recent" / "Recientes". Hidden entirely when there's nothing recent.
+
+**Other screens reachable from the grid**
+- A liked-songs list, a recently-played list, a playlists list (with the create-new-playlist button), and a followed-artists list. Artists and individual playlists open their existing detail pages as before.
+
+**What stays the same**
+- All data comes from the existing Library data layer, untouched.
+- Existing navigation to artist pages and playlist detail pages is preserved.
+- New localization text "Gelikte nummers" / "Liked songs" / "Canciones que te gustan" is added in Dutch, English, and Spanish.
+
+After the rework I'll run build checks to confirm everything compiles.

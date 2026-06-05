@@ -290,6 +290,10 @@ final class L10n {
         "library.trackCount": "%@ tracks",
         "library.playAll": "Alles afspelen",
         "library.playlistEmpty": "Nog geen tracks in deze playlist",
+        "library.likedPlaylist": "Gelikte nummers",
+        "library.shortcutLiked": "Geliket",
+        "library.shortcutRecent": "Laatst geluisterd",
+        "library.recentTitle": "Recent",
     ]
 
     // MARK: - EN
@@ -518,6 +522,10 @@ final class L10n {
         "library.trackCount": "%@ tracks",
         "library.playAll": "Play all",
         "library.playlistEmpty": "No tracks in this playlist yet",
+        "library.likedPlaylist": "Liked songs",
+        "library.shortcutLiked": "Liked",
+        "library.shortcutRecent": "Recently played",
+        "library.recentTitle": "Recent",
     ]
 
     // MARK: - ES
@@ -731,5 +739,9 @@ final class L10n {
         "library.trackCount": "%@ tracks",
         "library.playAll": "Reproducir todo",
         "library.playlistEmpty": "Aún no hay tracks en esta playlist",
+        "library.likedPlaylist": "Canciones que te gustan",
+        "library.shortcutLiked": "Te gusta",
+        "library.shortcutRecent": "Reproducido recientemente",
+        "library.recentTitle": "Recientes",
     ]
 }
