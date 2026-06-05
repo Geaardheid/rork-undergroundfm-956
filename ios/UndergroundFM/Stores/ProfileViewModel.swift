@@ -26,6 +26,8 @@ final class ProfileViewModel {
     var isUploadingBanner: Bool = false
 
     var bio: String = ""
+    var artistName: String = ""
+    var instagramUrl: String = ""
     var isSavingBio: Bool = false
 
     // MARK: - Fan
@@ -48,6 +50,9 @@ final class ProfileViewModel {
     func loadProfile(artistId: String) async {
         if let p = try? await ProfileService.shared.fetchProfile(artistId: artistId) {
             artistProfile = p
+            artistName = p.artistName
+            instagramUrl = p.instagramUrl ?? ""
+            bio = p.bio ?? ""
         }
     }
 
@@ -90,6 +95,21 @@ final class ProfileViewModel {
         isSavingBio = true
         defer { isSavingBio = false }
         try? await ProfileService.shared.updateBio(artistId: artistId, bio: bio)
+    }
+
+    /// Sla bio, artiestennaam en Instagram-link in één bewerking op.
+    /// Retourneert de opgeslagen naam zodat de auth-store de cache kan bijwerken.
+    @discardableResult
+    func saveProfile(artistId: String, userId: String) async -> String? {
+        isSavingBio = true
+        defer { isSavingBio = false }
+        try? await ProfileService.shared.updateBio(artistId: artistId, bio: bio)
+        let trimmedName = artistName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedName.isEmpty {
+            try? await ProfileService.shared.updateArtistName(artistId: artistId, userId: userId, name: trimmedName)
+        }
+        try? await ProfileService.shared.updateInstagram(artistId: artistId, instagramUrl: instagramUrl)
+        return trimmedName.isEmpty ? nil : trimmedName
     }
 
     func deleteTrack(_ track: Track) async {

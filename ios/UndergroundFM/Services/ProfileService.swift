@@ -61,6 +61,43 @@ final class ProfileService {
         )
     }
 
+    /// Werk de artiestennaam bij op de `artists`-rij én houd `users.display_name` in sync.
+    func updateArtistName(artistId: String, userId: String, name: String) async throws {
+        guard let token = SessionStore.shared.session?.accessToken else {
+            throw SupabaseError.message(L10n.shared.t("errors.unknown"))
+        }
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            throw SupabaseError.message(L10n.shared.t("errors.required"))
+        }
+        try await sb.update(
+            table: "artists",
+            query: ["id": "eq.\(artistId)"],
+            values: ["artist_name": trimmed],
+            accessToken: token
+        )
+        try await sb.update(
+            table: "users",
+            query: ["id": "eq.\(userId)"],
+            values: ["display_name": trimmed],
+            accessToken: token
+        )
+    }
+
+    /// Werk de Instagram-link van de eigen artiest bij (leeg = wissen).
+    func updateInstagram(artistId: String, instagramUrl: String) async throws {
+        guard let token = SessionStore.shared.session?.accessToken else {
+            throw SupabaseError.message(L10n.shared.t("errors.unknown"))
+        }
+        let trimmed = instagramUrl.trimmingCharacters(in: .whitespacesAndNewlines)
+        try await sb.update(
+            table: "artists",
+            query: ["id": "eq.\(artistId)"],
+            values: ["instagram_url": trimmed.isEmpty ? NSNull() : trimmed],
+            accessToken: token
+        )
+    }
+
     /// Werk titel + beschrijving van een eigen track bij.
     func updateTrack(trackId: String, title: String, description: String) async throws {
         guard let token = SessionStore.shared.session?.accessToken else {

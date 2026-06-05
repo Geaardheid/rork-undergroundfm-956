@@ -61,8 +61,11 @@ final class FeedStore {
         }
     }
 
+    /// Een sectie geldt als "geladen" zodra ze ooit succesvol klaar is — ook met een
+    /// lege lijst. Zo blijft een lege sectie de empty-state tonen i.p.v. bij een
+    /// volgende (transient) fout naar de error-staat te springen.
     private func hasData(for sectionId: String) -> Bool {
-        if case .loaded(let tracks) = sections[sectionId], !tracks.isEmpty {
+        if case .loaded = sections[sectionId] {
             return true
         }
         return false

@@ -261,6 +261,12 @@ final class AuthStore {
         currentUser?.avatarUrl = url
     }
 
+    /// Werk de gecachte artiestennaam bij na een profielbewerking (UI ververst direct).
+    func updateArtistName(_ name: String) {
+        artistName = name
+        currentUser?.displayName = name
+    }
+
     /// Werk de gecachte abonnementsstatus bij (aangeroepen door SubscriptionService
     /// na een refresh) zodat de gate direct ontgrendelt zonder re-login.
     func updateSubscriptionStatus(_ status: String) {

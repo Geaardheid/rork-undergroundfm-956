@@ -80,7 +80,6 @@ struct HomeFeedView: View {
             Spacer()
             HStack(spacing: AppSpacing.md) {
                 headerIcon("magnifyingglass") { showSearch = true }
-                headerIcon("bell") {}
             }
         }
     }

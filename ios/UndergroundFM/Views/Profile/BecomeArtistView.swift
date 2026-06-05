@@ -74,6 +74,10 @@ struct BecomeArtistView: View {
                 .padding(.top, AppSpacing.lg)
             }
         }
+        .safeAreaInset(edge: .bottom) {
+            // Houd de submit-knop boven de persistente mini player.
+            Color.clear.frame(height: 80)
+        }
         .navigationTitle(l10n.t("artist.becomeTitle"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(AppColors.bg, for: .navigationBar)

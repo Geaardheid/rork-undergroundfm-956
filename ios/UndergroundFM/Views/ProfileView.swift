@@ -232,9 +232,11 @@ struct ProfileView: View {
                     ProfileSectionHeader(title: l10n.t("artist.bioLabel"))
                     Spacer()
                     Button {
-                        if isEditingBio {
-                            if let aId = auth.artistId {
-                                Task { await vm.saveBio(artistId: aId) }
+                        if isEditingBio, let aId = auth.artistId, let uid = auth.currentUser?.id {
+                            Task {
+                                let savedName = await vm.saveProfile(artistId: aId, userId: uid)
+                                if let savedName { auth.updateArtistName(savedName) }
+                                await vm.loadProfile(artistId: aId)
                             }
                         }
                         isEditingBio.toggle()
@@ -244,6 +246,9 @@ struct ProfileView: View {
                             .foregroundStyle(AppColors.yellow)
                     }
                     .buttonStyle(.plain)
+                }
+                if isEditingBio {
+                    editableProfileFields
                 }
                 bioField
             }
@@ -264,6 +269,37 @@ struct ProfileView: View {
             }
             .padding(.horizontal, AppSpacing.lg)
         }
+    }
+
+    private var editableProfileFields: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.md) {
+            VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                editFieldLabel(l10n.t("profile.editName"))
+                AppTextField(
+                    placeholder: l10n.t("artist.namePlaceholder"),
+                    text: $vm.artistName,
+                    autocapitalize: .words
+                )
+            }
+            VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                editFieldLabel(l10n.t("artist.instagramLabel"))
+                AppTextField(
+                    placeholder: "https://instagram.com/...",
+                    text: $vm.instagramUrl,
+                    keyboard: .URL,
+                    autocapitalize: .never,
+                    contentType: .URL
+                )
+            }
+        }
+    }
+
+    private func editFieldLabel(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: AppFontSize.xs, weight: .black))
+            .tracking(2)
+            .textCase(.uppercase)
+            .foregroundStyle(AppColors.textMuted)
     }
 
     @ViewBuilder
