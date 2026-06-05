@@ -9,6 +9,7 @@
 import SwiftUI
 import UniformTypeIdentifiers
 import PhotosUI
+import AVFoundation
 
 struct UploadTrackView: View {
     @Environment(AuthStore.self) private var auth
@@ -17,6 +18,7 @@ struct UploadTrackView: View {
     // Audio picker
     @State private var audioURL: URL?
     @State private var audioFileName: String?
+    @State private var audioBitrate: Int?
 
     // Cover picker
     @State private var coverItem: PhotosPickerItem?
@@ -93,11 +95,10 @@ struct UploadTrackView: View {
                 case .success(let urls):
                     if let url = urls.first {
                         let secured = url.startAccessingSecurityScopedResource()
-                        audioURL = url
-                        audioFileName = url.lastPathComponent
                         if secured {
                             // Keep access while we use the file
                         }
+                        Task { await validateAndSetAudio(url: url) }
                     }
                 case .failure:
                     break
@@ -175,6 +176,23 @@ struct UploadTrackView: View {
                 .clipShape(.rect(cornerRadius: AppRadius.md))
             }
             .buttonStyle(PressableScaleStyle())
+
+            if let bitrate = audioBitrate {
+                qualityMessage(for: bitrate)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func qualityMessage(for bitrate: Int) -> some View {
+        if bitrate >= 256 {
+            Text(String(format: l10n.t("upload.qualityHigh"), bitrate))
+                .font(.system(size: AppFontSize.sm, weight: .semibold))
+                .foregroundStyle(AppColors.success)
+        } else {
+            Text(String(format: l10n.t("upload.qualityOk"), bitrate))
+                .font(.system(size: AppFontSize.sm, weight: .semibold))
+                .foregroundStyle(AppColors.yellow)
         }
     }
 
@@ -342,6 +360,33 @@ struct UploadTrackView: View {
             .foregroundStyle(AppColors.textMuted)
     }
 
+    // MARK: - Audio quality validation
+
+    private func validateAndSetAudio(url: URL) async {
+        let asset = AVURLAsset(url: url)
+        var kbps: Int?
+        if let tracks = try? await asset.loadTracks(withMediaType: .audio),
+           let track = tracks.first,
+           let dataRate = try? await track.load(.estimatedDataRate),
+           dataRate.isFinite, dataRate > 0 {
+            kbps = Int((dataRate / 1000).rounded())
+        }
+
+        if let kbps, kbps < 192 {
+            // Reject low quality, keep picker open.
+            audioURL = nil
+            audioFileName = nil
+            audioBitrate = nil
+            uploadError = String(format: l10n.t("upload.qualityTooLow"), kbps)
+            return
+        }
+
+        uploadError = nil
+        audioURL = url
+        audioFileName = url.lastPathComponent
+        audioBitrate = kbps
+    }
+
     // MARK: - Upload logic
 
     private func startUpload() async {
@@ -399,6 +444,7 @@ struct UploadTrackView: View {
     private func resetForm() {
         audioURL = nil
         audioFileName = nil
+        audioBitrate = nil
         coverItem = nil
         coverImageData = nil
         videoData = nil

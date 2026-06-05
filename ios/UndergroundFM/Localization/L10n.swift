@@ -176,6 +176,9 @@ final class L10n {
         "upload.uploadButton": "Track uploaden",
         "upload.successTitle": "Track geüpload!",
         "upload.successMessage": "Je track staat live op UndergroundFM.",
+        "upload.qualityTooLow": "Audiokwaliteit te laag (%d kbps). Lever minimaal 256 kbps aan voor de beste underground sound.",
+        "upload.qualityOk": "Kwaliteit is oké (%d kbps), maar 320 kbps klinkt beter.",
+        "upload.qualityHigh": "Hoge kwaliteit (%d kbps) ✓",
 
         "player.noTrack": "Geen nummer geselecteerd",
         "player.audio": "Audio",
@@ -408,6 +411,9 @@ final class L10n {
         "upload.uploadButton": "Upload track",
         "upload.successTitle": "Track uploaded!",
         "upload.successMessage": "Your track is live on UndergroundFM.",
+        "upload.qualityTooLow": "Audio quality too low (%d kbps). Deliver at least 256 kbps for the best underground sound.",
+        "upload.qualityOk": "Quality is okay (%d kbps), but 320 kbps sounds better.",
+        "upload.qualityHigh": "High quality (%d kbps) ✓",
 
         "player.noTrack": "No track selected",
         "player.audio": "Audio",
@@ -625,6 +631,9 @@ final class L10n {
         "upload.uploadButton": "Subir track",
         "upload.successTitle": "¡Track subido!",
         "upload.successMessage": "Tu track está en vivo en UndergroundFM.",
+        "upload.qualityTooLow": "Calidad de audio demasiado baja (%d kbps). Entrega al menos 256 kbps para el mejor sonido underground.",
+        "upload.qualityOk": "La calidad está bien (%d kbps), pero 320 kbps suena mejor.",
+        "upload.qualityHigh": "Alta calidad (%d kbps) ✓",
 
         "player.noTrack": "Ninguna pista seleccionada",
         "player.audio": "Audio",
