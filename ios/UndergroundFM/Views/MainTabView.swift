@@ -45,6 +45,7 @@ enum AppTab: String, CaseIterable, Identifiable {
 
 struct MainTabView: View {
     @Environment(AuthStore.self) private var auth
+    @Environment(SubscriptionService.self) private var subscription
     @Bindable var l10n: L10n
     @State private var selected: AppTab = .home
     @State private var showFullPlayer: Bool = false
@@ -83,6 +84,10 @@ struct MainTabView: View {
             .presentationDetents([.large])
             .presentationBackground(.black)
         }
+        .sheet(isPresented: paywallBinding) {
+            PaywallView(l10n: l10n)
+                .presentationBackground(AppColors.bg)
+        }
         .sheet(item: $artistRoute) { route in
             NavigationStack {
                 ArtistProfileView(route: route, l10n: l10n)
@@ -102,13 +107,37 @@ struct MainTabView: View {
         }
     }
 
+    // MARK: - Subscription gate
+
+    /// Opening the full now-playing experience is gated: subscribers go through,
+    /// non-subscribers get the paywall instead.
+    private var fullPlayerBinding: Binding<Bool> {
+        Binding(
+            get: { showFullPlayer },
+            set: { newValue in
+                if newValue {
+                    subscription.gate { showFullPlayer = true }
+                } else {
+                    showFullPlayer = false
+                }
+            }
+        )
+    }
+
+    private var paywallBinding: Binding<Bool> {
+        Binding(
+            get: { subscription.showPaywall },
+            set: { subscription.showPaywall = $0 }
+        )
+    }
+
     // MARK: - Bottom area (mini player + tab bar)
 
     private var bottomArea: some View {
         VStack(spacing: 0) {
             MiniPlayerView(
                 player: MusicPlayer.shared,
-                showFullPlayer: $showFullPlayer
+                showFullPlayer: fullPlayerBinding
             )
             .animation(.spring(response: 0.35, dampingFraction: 0.8), value: MusicPlayer.shared.hasTrack)
 

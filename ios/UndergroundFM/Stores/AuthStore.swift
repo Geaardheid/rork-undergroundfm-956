@@ -261,6 +261,12 @@ final class AuthStore {
         currentUser?.avatarUrl = url
     }
 
+    /// Werk de gecachte abonnementsstatus bij (aangeroepen door SubscriptionService
+    /// na een refresh) zodat de gate direct ontgrendelt zonder re-login.
+    func updateSubscriptionStatus(_ status: String) {
+        currentUser?.subscriptionStatus = status
+    }
+
     // MARK: - E-mailbevestiging (pending signup)
 
     private func savePending(_ p: PendingSignUp) {
