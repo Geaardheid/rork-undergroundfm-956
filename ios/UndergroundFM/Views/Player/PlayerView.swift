@@ -238,7 +238,16 @@ struct PlayerView: View {
             Spacer()
 
             Button {
-                presentShareSheet()
+                guard let track = player.currentTrack else { return }
+                let text = shareText
+                let deeplink = URL(string: "undergroundfm://track/\(track.id)")!
+                var items: [Any] = [text, deeplink]
+                if let art = player.artwork { items.insert(art, at: 0) }
+                let av = UIActivityViewController(activityItems: items, applicationActivities: nil)
+                if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                   let root = scene.windows.first?.rootViewController {
+                    root.present(av, animated: true)
+                }
             } label: {
                 Image(systemName: "square.and.arrow.up")
                     .font(.system(size: 21, weight: .medium))
@@ -248,34 +257,6 @@ struct PlayerView: View {
             .buttonStyle(.plain)
             .disabled(player.currentTrack == nil)
         }
-    }
-
-    /// Build the activity items (artwork, message, deep link) and present a
-    /// UIActivityViewController on the key window's top-most controller.
-    private func presentShareSheet() {
-        guard let track = player.currentTrack,
-              let deepLink = URL(string: "undergroundfm://track/\(track.id)") else { return }
-
-        let items: [Any] = [player.artwork as Any, shareText, deepLink].compactMap { $0 }
-
-        let activityVC = UIActivityViewController(activityItems: items, applicationActivities: nil)
-
-        guard let scene = UIApplication.shared.connectedScenes
-            .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene,
-              let root = scene.windows.first(where: { $0.isKeyWindow })?.rootViewController else { return }
-
-        var presenter = root
-        while let presented = presenter.presentedViewController {
-            presenter = presented
-        }
-
-        if let pop = activityVC.popoverPresentationController {
-            pop.sourceView = presenter.view
-            pop.sourceRect = CGRect(x: presenter.view.bounds.midX, y: presenter.view.bounds.midY, width: 0, height: 0)
-            pop.permittedArrowDirections = []
-        }
-
-        presenter.present(activityVC, animated: true)
     }
 
     private var shareText: String {
@@ -377,9 +358,14 @@ struct PlayerView: View {
             Button {
                 player.isRepeatEnabled.toggle()
             } label: {
-                Image(systemName: player.isRepeatEnabled ? "repeat.1" : "repeat")
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundStyle(player.isRepeatEnabled ? AppColors.yellow : AppColors.textSecond)
+                VStack(spacing: 2) {
+                    Image(systemName: player.isRepeatEnabled ? "repeat.1" : "repeat")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(player.isRepeatEnabled ? AppColors.yellow : AppColors.textSecond)
+                    Circle()
+                        .fill(player.isRepeatEnabled ? AppColors.yellow : Color.clear)
+                        .frame(width: 4, height: 4)
+                }
             }
             .buttonStyle(.plain)
         }
