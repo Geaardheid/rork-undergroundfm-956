@@ -19,6 +19,8 @@ struct UploadTrackView: View {
     @State private var audioURL: URL?
     @State private var audioFileName: String?
     @State private var audioBitrate: Int?
+    @State private var audioQualityMessage: String?
+    @State private var audioQualityColor: Color = .clear
 
     // Cover picker
     @State private var coverItem: PhotosPickerItem?
@@ -94,11 +96,8 @@ struct UploadTrackView: View {
                 switch result {
                 case .success(let urls):
                     if let url = urls.first {
-                        let secured = url.startAccessingSecurityScopedResource()
-                        if secured {
-                            // Keep access while we use the file
-                        }
-                        Task { await validateAndSetAudio(url: url) }
+                        _ = url.startAccessingSecurityScopedResource()
+                        Task { await validateAndSetAudio(url) }
                     }
                 case .failure:
                     break
@@ -177,22 +176,11 @@ struct UploadTrackView: View {
             }
             .buttonStyle(PressableScaleStyle())
 
-            if let bitrate = audioBitrate {
-                qualityMessage(for: bitrate)
+            if let msg = audioQualityMessage {
+                Text(msg)
+                    .font(.system(size: AppFontSize.xs, weight: .bold))
+                    .foregroundStyle(audioQualityColor)
             }
-        }
-    }
-
-    @ViewBuilder
-    private func qualityMessage(for bitrate: Int) -> some View {
-        if bitrate >= 256 {
-            Text(String(format: l10n.t("upload.qualityHigh"), bitrate))
-                .font(.system(size: AppFontSize.sm, weight: .semibold))
-                .foregroundStyle(AppColors.success)
-        } else {
-            Text(String(format: l10n.t("upload.qualityOk"), bitrate))
-                .font(.system(size: AppFontSize.sm, weight: .semibold))
-                .foregroundStyle(AppColors.yellow)
         }
     }
 
@@ -362,29 +350,42 @@ struct UploadTrackView: View {
 
     // MARK: - Audio quality validation
 
-    private func validateAndSetAudio(url: URL) async {
+    private func validateAndSetAudio(_ url: URL) async {
         let asset = AVURLAsset(url: url)
         var kbps: Int?
-        if let tracks = try? await asset.loadTracks(withMediaType: .audio),
-           let track = tracks.first,
-           let dataRate = try? await track.load(.estimatedDataRate),
-           dataRate.isFinite, dataRate > 0 {
-            kbps = Int((dataRate / 1000).rounded())
+        if let track = try? await asset.loadTracks(withMediaType: .audio).first,
+           let rate = try? await track.load(.estimatedDataRate), rate > 0 {
+            kbps = Int((rate / 1000).rounded())
         }
-
-        if let kbps, kbps < 192 {
-            // Reject low quality, keep picker open.
-            audioURL = nil
-            audioFileName = nil
-            audioBitrate = nil
-            uploadError = String(format: l10n.t("upload.qualityTooLow"), kbps)
-            return
+        await MainActor.run {
+            let ext = url.pathExtension.lowercased()
+            if let k = kbps {
+                if k < 192 {
+                    uploadError = String(format: l10n.t("upload.qualityTooLow"), k)
+                    audioURL = nil
+                    audioFileName = nil
+                    audioBitrate = nil
+                    audioQualityMessage = nil
+                    return
+                } else if k < 256 {
+                    audioQualityMessage = String(format: l10n.t("upload.qualityOk"), k)
+                    audioQualityColor = AppColors.yellow
+                } else {
+                    audioQualityMessage = String(format: l10n.t("upload.qualityHigh"), k)
+                    audioQualityColor = .green
+                }
+                if ext == "mp3" && k >= 256 {
+                    audioQualityMessage = (audioQualityMessage ?? "") + " \u{00B7} " + l10n.t("upload.preferAAC")
+                }
+                audioBitrate = k
+            } else {
+                audioQualityMessage = nil
+                audioBitrate = nil
+            }
+            uploadError = nil
+            audioURL = url
+            audioFileName = url.lastPathComponent
         }
-
-        uploadError = nil
-        audioURL = url
-        audioFileName = url.lastPathComponent
-        audioBitrate = kbps
     }
 
     // MARK: - Upload logic
@@ -445,6 +446,8 @@ struct UploadTrackView: View {
         audioURL = nil
         audioFileName = nil
         audioBitrate = nil
+        audioQualityMessage = nil
+        audioQualityColor = .clear
         coverItem = nil
         coverImageData = nil
         videoData = nil
