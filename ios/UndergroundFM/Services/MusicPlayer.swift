@@ -207,6 +207,7 @@ final class MusicPlayer {
         player?.replaceCurrentItem(with: nil)
         player = nil
         currentTrack = nil
+        artwork = nil
         isPlaying = false
         currentTime = 0
         duration = 0

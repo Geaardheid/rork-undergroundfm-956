@@ -23,6 +23,7 @@ struct ClipPlayerView: View {
 
     /// Maximaal toegestane drift (s) voordat de video opnieuw wordt gesynct.
     private let driftTolerance: TimeInterval = 0.25
+    @State private var lastSyncTime: TimeInterval = 0
 
     init(url: URL) {
         self.url = url
@@ -164,9 +165,11 @@ struct ClipPlayerView: View {
         let videoTime = player.currentTime().seconds
         guard videoTime.isFinite else { return }
         let drift = abs(videoTime - music.currentTime)
+        guard abs(music.currentTime - lastSyncTime) > 0.5 || drift > 1.0 else { return }
         if drift > driftTolerance {
             let target = CMTime(seconds: max(music.currentTime, 0), preferredTimescale: 600)
             player.seek(to: target, toleranceBefore: .zero, toleranceAfter: .zero)
+            lastSyncTime = music.currentTime
         }
         // Houd de afspeelstatus in lijn (bv. na bufferen).
         if music.isPlaying && player.timeControlStatus == .paused {

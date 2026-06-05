@@ -256,11 +256,7 @@ struct PlayerView: View {
         guard let track = player.currentTrack,
               let deepLink = URL(string: "undergroundfm://track/\(track.id)") else { return }
 
-        let image = player.artwork ?? UIImage(named: "AppIcon")
-        var items: [Any] = []
-        if let image { items.append(image) }
-        items.append(shareText)
-        items.append(deepLink)
+        let items: [Any] = [player.artwork as Any, shareText, deepLink].compactMap { $0 }
 
         let activityVC = UIActivityViewController(activityItems: items, applicationActivities: nil)
 
