@@ -140,8 +140,9 @@ final class ProfileService {
         return videoURL
     }
 
-    /// Upload een nieuwe profielfoto naar de `avatars` bucket en sla de URL op in users.
-    func updateUserAvatar(userId: String, imageData: Data) async throws -> String {
+    /// Upload een nieuwe profielfoto naar de `avatars` bucket en sla de URL op in users
+    /// (en op de artiestenrij wanneer `artistId` bekend is, zodat de foto publiek leesbaar blijft).
+    func updateUserAvatar(userId: String, imageData: Data, artistId: String? = nil) async throws -> String {
         guard let token = SessionStore.shared.session?.accessToken else {
             throw SupabaseError.message(L10n.shared.t("errors.unknown"))
         }
@@ -159,6 +160,14 @@ final class ProfileService {
             values: ["avatar_url": url],
             accessToken: token
         )
+        if let artistId {
+            try await sb.update(
+                table: "artists",
+                query: ["id": "eq.\(artistId)"],
+                values: ["avatar_url": url],
+                accessToken: token
+            )
+        }
         return url
     }
 

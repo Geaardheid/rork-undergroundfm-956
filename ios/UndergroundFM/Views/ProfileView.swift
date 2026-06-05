@@ -66,7 +66,7 @@ struct ProfileView: View {
                 Task {
                     guard let data = try? await item.loadTransferable(type: Data.self),
                           let userId = auth.currentUser?.id else { return }
-                    if let url = await vm.uploadAvatar(userId: userId, imageData: data) {
+                    if let url = await vm.uploadAvatar(userId: userId, imageData: data, artistId: auth.artistId) {
                         auth.updateAvatarUrl(url)
                     }
                     avatarItem = nil

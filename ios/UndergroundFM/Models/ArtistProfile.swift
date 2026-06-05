@@ -18,10 +18,12 @@ nonisolated struct ArtistProfile: Codable, Identifiable, Hashable {
     let instagramHandle: String?
     let bannerUrl: String?
     let verified: Bool
+    let artistAvatarUrl: String?
     let users: EmbeddedArtistUser?
 
     var isFoundingArtist: Bool { users?.isFoundingArtist ?? false }
-    var avatarUrl: String? { users?.avatarUrl }
+    /// Geef de publieke artiestenkolom voorrang; val terug op de oude users-join voor oude data.
+    var avatarUrl: String? { artistAvatarUrl ?? users?.avatarUrl }
 
     /// Genormaliseerde Instagram-handle (zonder @, url-prefix of trailing slash).
     var instagramHandleValue: String? {
@@ -49,6 +51,7 @@ nonisolated struct ArtistProfile: Codable, Identifiable, Hashable {
         case instagramHandle = "instagram_handle"
         case bannerUrl = "banner_url"
         case verified
+        case artistAvatarUrl = "avatar_url"
         case users
     }
 }

@@ -57,10 +57,10 @@ final class ProfileViewModel {
     }
 
     /// Upload een nieuwe profielfoto; retourneert de nieuwe URL bij succes.
-    func uploadAvatar(userId: String, imageData: Data) async -> String? {
+    func uploadAvatar(userId: String, imageData: Data, artistId: String?) async -> String? {
         isUploadingAvatar = true
         defer { isUploadingAvatar = false }
-        return try? await ProfileService.shared.updateUserAvatar(userId: userId, imageData: imageData)
+        return try? await ProfileService.shared.updateUserAvatar(userId: userId, imageData: imageData, artistId: artistId)
     }
 
     /// Upload een nieuwe profielbanner; werkt het lokale profiel direct bij.
@@ -72,7 +72,7 @@ final class ProfileViewModel {
             artistProfile = ArtistProfile(
                 id: p.id, userId: p.userId, artistName: p.artistName, bio: p.bio,
                 genreTags: p.genreTags, instagramUrl: p.instagramUrl, instagramHandle: p.instagramHandle,
-                bannerUrl: url, verified: p.verified, users: p.users
+                bannerUrl: url, verified: p.verified, artistAvatarUrl: p.artistAvatarUrl, users: p.users
             )
         }
     }

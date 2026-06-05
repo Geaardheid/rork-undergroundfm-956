@@ -29,7 +29,7 @@ final class FollowService {
             from: "follows",
             query: [
                 "user_id": "eq.\(userId)",
-                "select": "artists(*,users(is_founding_artist,display_name,avatar_url))",
+                "select": "artists(*,avatar_url,users(is_founding_artist,display_name,avatar_url))",
                 "order": "created_at.desc",
                 "limit": "100"
             ],

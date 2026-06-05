@@ -12,15 +12,18 @@ nonisolated struct ArtistSearchResult: Codable, Identifiable, Hashable {
     let id: String
     let artistName: String
     let genreTags: [String]
+    let artistAvatarUrl: String?
     let users: EmbeddedArtistUser?
 
     var isFoundingArtist: Bool { users?.isFoundingArtist ?? false }
-    var avatarUrl: String? { users?.avatarUrl }
+    /// Geef de publieke artiestenkolom voorrang; val terug op de oude users-join voor oude data.
+    var avatarUrl: String? { artistAvatarUrl ?? users?.avatarUrl }
 
     enum CodingKeys: String, CodingKey {
         case id
         case artistName = "artist_name"
         case genreTags = "genre_tags"
+        case artistAvatarUrl = "avatar_url"
         case users
     }
 }
@@ -49,7 +52,7 @@ final class SearchService {
             ArtistSearchResult.self,
             from: "artists",
             query: [
-                "select": "id,artist_name,genre_tags,users(is_founding_artist,display_name,avatar_url)",
+                "select": "id,artist_name,genre_tags,avatar_url,users(is_founding_artist,display_name,avatar_url)",
                 "artist_name": pattern,
                 "order": "artist_name.asc",
                 "limit": "20"
@@ -80,7 +83,7 @@ final class SearchService {
             ArtistSearchResult.self,
             from: "artists",
             query: [
-                "select": "id,artist_name,genre_tags,users(is_founding_artist,display_name,avatar_url)",
+                "select": "id,artist_name,genre_tags,avatar_url,users(is_founding_artist,display_name,avatar_url)",
                 "order": "created_at.desc",
                 "limit": "\(limit)"
             ],
