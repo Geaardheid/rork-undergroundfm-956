@@ -165,6 +165,16 @@ struct PaywallView: View {
             .buttonStyle(PressableScaleStyle())
             .disabled(isRefreshing)
 
+            HStack(spacing: AppSpacing.xs) {
+                Image(systemName: "exclamationmark.triangle")
+                    .font(.system(size: AppFontSize.xs, weight: .bold))
+                    .foregroundStyle(AppColors.yellow)
+                Text(l10n.t("paywall.emailWarning"))
+                    .font(.system(size: AppFontSize.xs, weight: .medium))
+                    .foregroundStyle(AppColors.textSecond)
+            }
+            .multilineTextAlignment(.center)
+
             Text(l10n.t("paywall.webNotice"))
                 .font(.system(size: AppFontSize.xs, weight: .medium))
                 .foregroundStyle(AppColors.textMuted)
