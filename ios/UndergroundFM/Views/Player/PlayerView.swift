@@ -238,20 +238,7 @@ struct PlayerView: View {
             Spacer()
 
             Button {
-                guard let track = player.currentTrack else { return }
-                let text = shareText
-                let deeplink = URL(string: "undergroundfm://track/\(track.id)")!
-                var items: [Any] = [text, deeplink]
-                if let art = player.artwork { items.insert(art, at: 0) }
-                let av = UIActivityViewController(activityItems: items, applicationActivities: nil)
-                if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                   let root = scene.windows.first?.rootViewController {
-                    var top = root
-                    while let presented = top.presentedViewController {
-                        top = presented
-                    }
-                    top.present(av, animated: true)
-                }
+                presentShareSheet()
             } label: {
                 Image(systemName: "square.and.arrow.up")
                     .font(.system(size: 21, weight: .medium))
@@ -266,9 +253,46 @@ struct PlayerView: View {
     private var shareText: String {
         let title = player.currentTrack?.title ?? ""
         let artist = player.currentTrack?.artistName ?? ""
-        let message = String(format: l10n.t("player.shareText"), title, artist)
-        guard let id = player.currentTrack?.id else { return message }
-        return "\(message)\n\nundergroundfm://track/\(id)"
+        return String(format: l10n.t("player.shareText"), title, artist)
+    }
+
+    private func presentShareSheet() {
+        guard let track = player.currentTrack,
+              let deepLink = URL(string: "undergroundfm://track/\(track.id)") else { return }
+        let message = shareText
+
+        func show(_ image: UIImage?) {
+            var items: [Any] = []
+            if let image { items.append(image) }
+            items.append(message)
+            items.append(deepLink)
+            let vc = UIActivityViewController(activityItems: items, applicationActivities: nil)
+            guard let scene = UIApplication.shared.connectedScenes
+                .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene,
+                  let root = scene.windows.first(where: { $0.isKeyWindow })?.rootViewController else { return }
+            var presenter = root
+            while let p = presenter.presentedViewController { presenter = p }
+            if let pop = vc.popoverPresentationController {
+                pop.sourceView = presenter.view
+                pop.sourceRect = CGRect(x: presenter.view.bounds.midX, y: presenter.view.bounds.midY, width: 0, height: 0)
+                pop.permittedArrowDirections = []
+            }
+            presenter.present(vc, animated: true)
+        }
+
+        if let art = player.artwork {
+            show(art)
+        } else if let urlStr = track.thumbnailUrl, let url = URL(string: urlStr) {
+            Task {
+                var loaded: UIImage?
+                if let (data, _) = try? await URLSession.shared.data(from: url) {
+                    loaded = UIImage(data: data)
+                }
+                await MainActor.run { show(loaded) }
+            }
+        } else {
+            show(nil)
+        }
     }
 
     // MARK: - Scrubber
