@@ -48,6 +48,7 @@ final class MusicPlayer {
     @ObservationIgnored private var player: AVPlayer?
     private var timeObserver: Any?
     private var statusObserver: NSKeyValueObservation?
+    private var endObserver: NSObjectProtocol?
     private var artworkTask: Task<Void, Never>?
 
     private init() {
@@ -294,8 +295,10 @@ final class MusicPlayer {
             queue: .main
         ) { [weak self] time in
             guard let self else { return }
-            self.currentTime = time.seconds
-            ViewTracker.shared.tick(currentTime: time.seconds, duration: self.duration)
+            guard !self.isSwitchingSource else { return }
+            let t = time.seconds
+            self.currentTime = self.duration > 0 ? min(t, self.duration) : t
+            ViewTracker.shared.tick(currentTime: self.currentTime, duration: self.duration)
 
             // Preview-modus: niet-abonnees mogen maar 30s per track horen.
             // Centrale cutoff op spelerniveau — werkt voor audio, mini player en clip.
@@ -317,7 +320,7 @@ final class MusicPlayer {
             }
         }
 
-        NotificationCenter.default.addObserver(
+        endObserver = NotificationCenter.default.addObserver(
             forName: .AVPlayerItemDidPlayToEndTime,
             object: playerItem,
             queue: .main
@@ -334,6 +337,7 @@ final class MusicPlayer {
             if self.currentQueueIndex + 1 < self.queue.count {
                 self.playNext()
             } else {
+                self.player?.pause()
                 self.isPlaying = false
                 self.currentTime = 0
             }
@@ -347,6 +351,10 @@ final class MusicPlayer {
         }
         statusObserver?.invalidate()
         statusObserver = nil
+        if let endObserver {
+            NotificationCenter.default.removeObserver(endObserver)
+            self.endObserver = nil
+        }
     }
 
     // MARK: - Now Playing & Remote Commands
