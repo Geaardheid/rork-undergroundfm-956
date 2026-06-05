@@ -215,7 +215,7 @@ final class AuthStore {
     }
 
     /// Promote current user to artist by creating an artists row + updating users.role.
-    func becomeArtist(name: String, bio: String, genreTags: [String], instagramUrl: String) async -> Bool {
+    func becomeArtist(name: String, bio: String, genreTags: [String], instagramUrl: String, inviteCode: String) async -> Bool {
         guard let user = currentUser,
               let token = SessionStore.shared.session?.accessToken else {
             self.errorMessage = L10n.shared.t("errors.unknown")
@@ -230,10 +230,13 @@ final class AuthStore {
                 artistName: name,
                 bio: bio,
                 genreTags: genreTags,
-                instagramUrl: instagramUrl
+                instagramUrl: instagramUrl,
+                inviteCode: inviteCode
             )
+            let isFounding = inviteCode.uppercased().hasPrefix("FOUNDING") || inviteCode.uppercased().hasPrefix("FA")
             var updated = user
             updated.role = .artist
+            updated.isFoundingArtist = isFounding
             self.currentUser = updated
             self.artistName = savedName
             self.artistId = try? await ArtistService.shared.fetchArtistId(

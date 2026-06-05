@@ -15,6 +15,7 @@ struct BecomeArtistView: View {
     @State private var artistName: String = ""
     @State private var bio: String = ""
     @State private var instagramUrl: String = ""
+    @State private var inviteCode: String = ""
     @State private var selectedGenres: Set<String> = []
     @State private var showSuccess: Bool = false
 
@@ -34,6 +35,7 @@ struct BecomeArtistView: View {
     private var canSubmit: Bool {
         !artistName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
         !selectedGenres.isEmpty &&
+        inviteCode.trimmingCharacters(in: .whitespacesAndNewlines).count >= 4 &&
         !auth.isLoading
     }
 
@@ -48,6 +50,7 @@ struct BecomeArtistView: View {
                     bioField
                     genrePicker
                     instagramField
+                    inviteField
 
                     if let msg = auth.errorMessage {
                         Text(msg)
@@ -177,6 +180,31 @@ struct BecomeArtistView: View {
         }
     }
 
+    private var inviteField: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.sm) {
+            label(l10n.t("invite.title"))
+            Text(l10n.t("invite.subtitle"))
+                .font(.system(size: AppFontSize.sm, weight: .medium))
+                .foregroundStyle(AppColors.textSecond)
+            InviteCodeInputView(code: $inviteCode)
+                .padding(.top, AppSpacing.xs)
+
+            if inviteCode.uppercased().hasPrefix("FOUND") && inviteCode.count >= 5 {
+                HStack(spacing: AppSpacing.sm) {
+                    Image(systemName: "star.fill")
+                        .foregroundStyle(AppColors.yellowText)
+                    Text(l10n.t("invite.foundingBadge"))
+                        .font(.system(size: AppFontSize.sm, weight: .black))
+                        .foregroundStyle(AppColors.yellowText)
+                }
+                .padding(.horizontal, AppSpacing.md)
+                .padding(.vertical, 6)
+                .background(AppColors.yellow)
+                .clipShape(Capsule())
+            }
+        }
+    }
+
     private func label(_ text: String) -> some View {
         Text(text)
             .font(.system(size: AppFontSize.xs, weight: .black))
@@ -192,7 +220,8 @@ struct BecomeArtistView: View {
             name: artistName,
             bio: bio,
             genreTags: Array(selectedGenres),
-            instagramUrl: instagramUrl
+            instagramUrl: instagramUrl,
+            inviteCode: inviteCode
         )
         if ok {
             showSuccess = true
