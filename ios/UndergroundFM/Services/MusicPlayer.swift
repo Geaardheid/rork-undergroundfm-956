@@ -11,6 +11,13 @@ import MediaPlayer
 import Observation
 import UIKit
 
+/// The two playback sources of a single track. Only one is ever active at a
+/// time so there is never double audio.
+enum PlaybackSource {
+    case audio
+    case video
+}
+
 @Observable
 final class MusicPlayer {
     static let shared = MusicPlayer()
@@ -23,12 +30,22 @@ final class MusicPlayer {
     var artwork: UIImage?
     /// When enabled, the current track repeats instead of advancing the queue.
     var isRepeatEnabled: Bool = false
+    /// Which source (audio or video) is currently driving playback.
+    var activeSource: PlaybackSource = .audio
+    /// True while a source switch is buffering the new source.
+    var isSwitchingSource: Bool = false
+
+    /// The underlying player, exposed only when video is the active source so a
+    /// video layer can render it. Audio playback never surfaces a video layer.
+    var videoRenderPlayer: AVPlayer? {
+        activeSource == .video ? player : nil
+    }
 
     // MARK: - Queue
     var queue: [Track] = []
     var currentQueueIndex: Int = 0
 
-    private var player: AVPlayer?
+    @ObservationIgnored private var player: AVPlayer?
     private var timeObserver: Any?
     private var statusObserver: NSKeyValueObservation?
     private var artworkTask: Task<Void, Never>?
@@ -144,23 +161,73 @@ final class MusicPlayer {
 
     /// Internal loader shared by queue and direct playback. Does not touch
     /// `queue`/`currentQueueIndex` so callers control queue semantics.
+    /// Every new track always starts on the audio source.
     private func loadFromQueue(_ track: Track) {
         clear()
 
         guard let urlStr = track.audioUrl, let url = URL(string: urlStr) else { return }
 
+        activeSource = .audio
         currentTrack = track
-        let item = AVPlayerItem(url: url)
-        player = AVPlayer(playerItem: item)
         duration = TimeInterval(track.duration ?? 0)
 
-        observe(playerItem: item)
-        play()
+        preparePlayer(url: url, seekTo: 0, resume: true)
         updateNowPlayingInfo()
         loadArtwork(from: track.thumbnailUrl)
 
         if let uid = SessionStore.shared.session?.userId {
             ViewTracker.shared.startSession(track: track, userId: uid)
+        }
+    }
+
+    // MARK: - Source switching
+
+    /// Switch between the audio and video sources of the current track while
+    /// preserving the playback position and play/pause state. Only one source
+    /// plays at a time, so there is never double audio.
+    func switchSource(to source: PlaybackSource) {
+        guard source != activeSource, let track = currentTrack else { return }
+        let urlStr = (source == .video) ? track.videoUrl : track.audioUrl
+        guard let urlStr, let url = URL(string: urlStr) else { return }
+
+        let position = currentTime
+        let wasPlaying = isPlaying
+        activeSource = source
+        isSwitchingSource = true
+        preparePlayer(url: url, seekTo: position, resume: wasPlaying)
+        updateNowPlayingInfo()
+    }
+
+    /// Build a fresh AVPlayer for `url`, seek it to `position`, and resume or
+    /// pause to match the previous state. Tears down only the player engine —
+    /// the current track, artwork, queue, and Now Playing entry are preserved.
+    private func preparePlayer(url: URL, seekTo position: TimeInterval, resume: Bool) {
+        removeObservers()
+        player?.pause()
+        player?.replaceCurrentItem(with: nil)
+        player = nil
+
+        let item = AVPlayerItem(url: url)
+        let avPlayer = AVPlayer(playerItem: item)
+        avPlayer.isMuted = false
+        player = avPlayer
+
+        observe(playerItem: item)
+
+        let finishSwitch: () -> Void = { [weak self] in
+            guard let self else { return }
+            self.isSwitchingSource = false
+            if resume { self.play() } else { self.pause() }
+        }
+
+        if position > 0 {
+            currentTime = position
+            let target = CMTime(seconds: position, preferredTimescale: 600)
+            avPlayer.seek(to: target, toleranceBefore: .zero, toleranceAfter: .zero) { _ in
+                Task { @MainActor in finishSwitch() }
+            }
+        } else {
+            finishSwitch()
         }
     }
 
@@ -211,6 +278,8 @@ final class MusicPlayer {
         isPlaying = false
         currentTime = 0
         duration = 0
+        activeSource = .audio
+        isSwitchingSource = false
         MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
     }
 

@@ -47,8 +47,15 @@ struct PlayerView: View {
             }
         }
         .task(id: player.currentTrack?.id) { await loadLikeState() }
+        .onChange(of: player.currentTrack?.id) { _, _ in
+            // Every new track opens on the audio source by default.
+            selectedTab = .audio
+        }
         .onChange(of: hasClip) { _, has in
             if !has { selectedTab = .audio }
+        }
+        .onChange(of: selectedTab) { _, tab in
+            player.switchSource(to: tab == .clip ? .video : .audio)
         }
     }
 
@@ -406,7 +413,7 @@ struct PlayerView: View {
         if let urlStr = player.currentTrack?.videoUrl, !urlStr.isEmpty, let url = URL(string: urlStr) {
             VStack(spacing: AppSpacing.lg) {
                 Spacer()
-                ClipPlayerView(url: url)
+                ClipPlayerView()
                     .aspectRatio(16.0 / 9.0, contentMode: .fit)
                     .frame(maxWidth: .infinity)
                     .background(Color.black)

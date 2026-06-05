@@ -1,33 +1,33 @@
-# Rework the Library tab into a visual hybrid layout
+# Rework the player to switch between Audio and Video like YouTube Music
 
-A UI-only redesign of the Library tab. All data loading stays exactly as it is — only the look and layout change. Top to bottom, the new Library screen will be:
+## What changes
 
-**1. Living hero header**
-- A layered "cover collage" of floating album covers pulled from your liked tracks, with the bold title "Bibliotheek" / "Library" overlaid.
-- Covers fade in and gently drift, reusing the same alive-but-purposeful animation style from the Search screen.
-- If you have fewer than 4 liked tracks, it falls back to a clean yellow-accented gradient header instead.
-- A small "+" button stays in the header to create a new playlist.
+Right now the Video tab quietly runs a second, muted copy of the video and constantly nudges the audio to stay in sync — which causes the glitches, restarts, and drift you're hearing. I'll replace that with a clean "one track, two sources" model.
 
-**2. 2×2 shortcut grid**
-Four large tappable cards, each with a bold label and yellow accent:
-- **Geliket** (heart) — background shows your most recent liked track's cover; opens your liked songs.
-- **Laatst geluisterd** (clock) — shows your most recently played track's cover; opens recently-played tracks.
-- **Playlists** (list) — a small cover collage of your playlists; opens your playlists.
-- **Artiesten** (two people) — a collage of followed-artist avatars; opens your followed artists.
-- Cards with no content show just their icon on a card background. Each card presses down slightly when tapped.
+## How it will work
 
-**3. "Gelikte nummers" auto-playlist screen**
-Tapping **Geliket** opens a playlist-style screen titled "Gelikte nummers" / "Liked songs" / "Canciones que te gustan" listing all your liked tracks, with an "Alles afspelen" button that plays them all as a queue.
+- **Audio tab (default):** plays the song's audio with the cover art, exactly like today.
+- **Video tab:** plays the actual video file *with its own sound*. The muted-mirror approach is gone — the video is a real alternative way to experience the same track.
+- **Only one source ever plays at a time**, so there's never doubled or echoing audio.
 
-**4. Recent tracks strip**
-Below the grid, a horizontal scroll of your recently played tracks as cover cards — tap any to play instantly. Titled "Recent" / "Recientes". Hidden entirely when there's nothing recent.
+## Switching feels seamless
 
-**Other screens reachable from the grid**
-- A liked-songs list, a recently-played list, a playlists list (with the create-new-playlist button), and a followed-artists list. Artists and individual playlists open their existing detail pages as before.
+- When you tap between Audio and Video, the player remembers exactly where you are in the track, swaps to the other source, and picks up from the same spot.
+- It keeps your play/pause state — if music was playing, it keeps playing; if paused, it stays paused.
+- A brief "loading" moment on switch is expected while the new source buffers.
 
-**What stays the same**
-- All data comes from the existing Library data layer, untouched.
-- Existing navigation to artist pages and playlist detail pages is preserved.
-- New localization text "Gelikte nummers" / "Liked songs" / "Canciones que te gustan" is added in Dutch, English, and Spanish.
+## Everything keeps working on whichever source is active
 
-After the rework I'll run build checks to confirm everything compiles.
+- The scrubber, play/pause, and skip controls always control whatever is currently playing (audio or video).
+- The lock screen / Now Playing controls keep working and reflect the active source.
+- The 30-second preview limit for non-subscribers still applies on both audio and video.
+
+## Behavior details (from your answers)
+
+- Each **new track always opens on the Audio tab** by default.
+- For tracks **without a video, the Video tab stays hidden** entirely.
+- When a track changes or playback is cleared, **both sources are torn down cleanly** so nothing lingers in the background.
+
+## What's being removed
+
+- The old "muted video mirrors the audio" logic and the start/stop sync routines that ran every time the Video tab appeared or disappeared. The video player no longer fights the audio player for timing.
