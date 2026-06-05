@@ -246,7 +246,11 @@ struct PlayerView: View {
                 let av = UIActivityViewController(activityItems: items, applicationActivities: nil)
                 if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                    let root = scene.windows.first?.rootViewController {
-                    root.present(av, animated: true)
+                    var top = root
+                    while let presented = top.presentedViewController {
+                        top = presented
+                    }
+                    top.present(av, animated: true)
                 }
             } label: {
                 Image(systemName: "square.and.arrow.up")
