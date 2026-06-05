@@ -7,6 +7,7 @@ import SwiftUI
 
 @main
 struct UndergroundFMApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @State private var auth = AuthStore()
     @State private var l10n = L10n.shared
     @State private var subscription = SubscriptionService.shared

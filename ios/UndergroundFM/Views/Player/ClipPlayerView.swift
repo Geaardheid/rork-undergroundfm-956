@@ -22,7 +22,7 @@ struct ClipPlayerView: View {
     @State private var didStartSyncedPlayback: Bool = false
 
     /// Maximaal toegestane drift (s) voordat de video opnieuw wordt gesynct.
-    private let driftTolerance: TimeInterval = 0.35
+    private let driftTolerance: TimeInterval = 0.1
 
     init(url: URL) {
         self.url = url
@@ -60,8 +60,14 @@ struct ClipPlayerView: View {
                 .transition(.opacity)
             }
         }
-        .onAppear { startSync() }
-        .onDisappear { stopSync() }
+        .onAppear {
+            OrientationManager.shared.allowLandscape()
+            startSync()
+        }
+        .onDisappear {
+            OrientationManager.shared.lockPortrait()
+            stopSync()
+        }
         // Volg play/pause van de audio.
         .onChange(of: music.isPlaying) { _, playing in
             guard didStartSyncedPlayback else { return }
