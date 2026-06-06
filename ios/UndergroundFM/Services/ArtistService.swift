@@ -77,19 +77,18 @@ final class ArtistService {
         let isFounding = code.hasPrefix("FOUNDING") || code.hasPrefix("FA")
         let sharePct = isFounding ? 0.60 : 0.50
 
-        // Claim de invite code als plain UPDATE van de bestaande rij — vóór de
-        // upgrade, zodat een mislukte claim geen half-geüpgrade gebruiker achterlaat.
-        let newCount = (inviteRow.useCount ?? 0) + 1
-        try await sb.update(
-            table: "invite_codes",
-            query: ["code": "eq.\(code)"],
-            values: [
-                "used_by": userId,
-                "used_at": ISO8601DateFormatter().string(from: Date()),
-                "use_count": newCount
-            ],
+        // Claim de invite code atomisch via de RPC — vóór de upgrade, zodat een
+        // mislukte claim geen half-geüpgrade gebruiker achterlaat. De RPC omzeilt
+        // de RLS-policy op invite_codes en valideert/verhoogt use_count in één transactie.
+        let claimed = try await sb.rpcValue(
+            Bool.self,
+            "claim_invite_code",
+            params: ["code_input": code, "claimer": userId],
             accessToken: accessToken
         )
+        guard claimed else {
+            throw SupabaseError.message(L10n.shared.t("invite.invalid"))
+        }
 
         var values: [String: Any] = [
             "user_id": userId,

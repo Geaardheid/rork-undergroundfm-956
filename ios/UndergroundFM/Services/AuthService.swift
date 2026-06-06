@@ -248,6 +248,20 @@ final class AuthService {
         if let row = existing.first { return row }
 
         let isFounding = code.hasPrefix("FOUNDING") || code.hasPrefix("FA")
+
+        // Claim de invite code atomisch via de RPC — vóór de upgrade, zodat een
+        // mislukte claim geen half-geüpgrade gebruiker achterlaat. De RPC omzeilt
+        // de RLS-policy op invite_codes en verhoogt use_count in één transactie.
+        let claimed = try await sb.rpcValue(
+            Bool.self,
+            "claim_invite_code",
+            params: ["code_input": code, "claimer": session.userId],
+            accessToken: session.accessToken
+        )
+        guard claimed else {
+            throw SupabaseError.message(L10n.shared.t("invite.invalid"))
+        }
+
         let user = try await createOrUpdateUserRow(
             userId: session.userId,
             email: email,
@@ -272,25 +286,6 @@ final class AuthService {
             accessToken: session.accessToken
         )
 
-        let codes: [InviteCodeRow] = try await sb.select(
-            InviteCodeRow.self,
-            from: "invite_codes",
-            query: ["code": "eq.\(code)", "select": "*", "limit": "1"],
-            accessToken: session.accessToken
-        )
-        if let inviteRow = codes.first {
-            let newCount = (inviteRow.useCount ?? 0) + 1
-            try await sb.update(
-                table: "invite_codes",
-                query: ["code": "eq.\(code)"],
-                values: [
-                    "used_by": session.userId,
-                    "used_at": ISO8601DateFormatter().string(from: Date()),
-                    "use_count": newCount
-                ],
-                accessToken: session.accessToken
-            )
-        }
         return user
     }
 

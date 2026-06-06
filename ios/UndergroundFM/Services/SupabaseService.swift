@@ -273,6 +273,28 @@ nonisolated final class SupabaseService: @unchecked Sendable {
         try Self.assertOK(resp, data: data)
     }
 
+    /// Roep een Postgres RPC aan en decodeer het scalaire resultaat (bv. een Bool).
+    func rpcValue<T: Decodable>(
+        _ type: T.Type,
+        _ function: String,
+        params: [String: Any],
+        accessToken: String? = nil
+    ) async throws -> T {
+        let req = try restRequest(
+            path: "rpc/\(function)",
+            method: "POST",
+            accessToken: accessToken,
+            body: params
+        )
+        let (data, resp) = try await session.data(for: req)
+        try Self.assertOK(resp, data: data)
+        do {
+            return try JSONDecoder().decode(T.self, from: data)
+        } catch {
+            throw SupabaseError.decoding(String(describing: error))
+        }
+    }
+
     // MARK: - Storage
 
     /// Verwijder een object uit een Supabase Storage bucket.
