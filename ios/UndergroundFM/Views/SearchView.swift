@@ -41,6 +41,9 @@ struct SearchView: View {
                     resultsArea
                 }
             }
+            .safeAreaInset(edge: .bottom) {
+                Color.clear.frame(height: MusicPlayer.shared.hasTrack ? 64 : 0)
+            }
             .navigationDestination(for: ArtistRoute.self) { route in
                 ArtistProfileView(route: route, l10n: l10n)
             }

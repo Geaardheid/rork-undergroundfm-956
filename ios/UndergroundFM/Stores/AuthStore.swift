@@ -149,6 +149,7 @@ final class AuthStore {
     }
 
     func signOut() async {
+        MusicPlayer.shared.clear()
         await AuthService.shared.signOut()
         self.currentUser = nil
         self.artistName = nil
