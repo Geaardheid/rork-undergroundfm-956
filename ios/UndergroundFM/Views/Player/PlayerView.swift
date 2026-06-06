@@ -352,6 +352,7 @@ struct PlayerView: View {
             Spacer()
 
             Button {
+                HapticManager.light()
                 player.skipBackward()
             } label: {
                 Image(systemName: "backward.fill")
@@ -363,6 +364,7 @@ struct PlayerView: View {
             Spacer()
 
             Button {
+                HapticManager.light()
                 player.togglePlayPause()
             } label: {
                 ZStack {
@@ -380,6 +382,7 @@ struct PlayerView: View {
             Spacer()
 
             Button {
+                HapticManager.light()
                 player.skipForward()
             } label: {
                 Image(systemName: "forward.fill")
@@ -481,6 +484,7 @@ struct PlayerView: View {
         defer { likeBusy = false }
         let wasLiked = isLiked
         isLiked.toggle()
+        HapticManager.medium()
         do {
             if wasLiked {
                 try await LikesService.shared.unlike(trackId: track.id, userId: userId)
@@ -489,6 +493,7 @@ struct PlayerView: View {
             }
         } catch {
             isLiked = wasLiked
+            HapticManager.error()
         }
     }
 

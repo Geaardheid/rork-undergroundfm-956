@@ -183,7 +183,10 @@ private struct TabButton: View {
     private static let inactiveColor = Color(hex: 0x444444)
 
     var body: some View {
-        Button(action: action) {
+        Button {
+            HapticManager.selection()
+            action()
+        } label: {
             VStack(spacing: 5) {
                 // Active-tab indicator line above the icon
                 Capsule()

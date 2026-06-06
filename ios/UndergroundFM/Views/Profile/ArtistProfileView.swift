@@ -182,6 +182,7 @@ struct ArtistProfileView: View {
         defer { followBusy = false }
         let wasFollowing = isFollowing
         isFollowing.toggle()
+        HapticManager.medium()
         do {
             if wasFollowing {
                 try await FollowService.shared.unfollow(artistId: route.artistId, userId: userId)

@@ -362,6 +362,7 @@ struct UploadTrackView: View {
             if let k = kbps {
                 if k < 192 {
                     uploadError = String(format: l10n.t("upload.qualityTooLow"), k)
+                    HapticManager.error()
                     audioURL = nil
                     audioFileName = nil
                     audioBitrate = nil
@@ -436,9 +437,11 @@ struct UploadTrackView: View {
             )
             isUploading = false
             showSuccess = true
+            HapticManager.success()
         } catch {
             isUploading = false
             uploadError = error.localizedDescription
+            HapticManager.error()
         }
     }
 
