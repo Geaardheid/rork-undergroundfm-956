@@ -12,14 +12,25 @@ struct RootView: View {
     @AppStorage("onboarding_completed") private var onboardingCompleted: Bool = false
     @State private var showRegister: Bool = false
     @State private var registerAsArtist: Bool = false
+    @State private var splashLogoIn: Bool = false
 
     var body: some View {
         Group {
             if auth.isBooting {
-                LogoView()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(AppColors.bg.ignoresSafeArea())
-                    .transition(.opacity)
+                ZStack {
+                    CinematicBackground()
+                        .ignoresSafeArea()
+                        .allowsHitTesting(false)
+
+                    LogoView()
+                        .opacity(splashLogoIn ? 1 : 0)
+                        .scaleEffect(splashLogoIn ? 1 : 0.88)
+                        .animation(.easeOut(duration: 0.9), value: splashLogoIn)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .onAppear { splashLogoIn = true }
+                .onDisappear { splashLogoIn = false }
+                .transition(.opacity)
             } else if auth.isAuthenticated {
                 MainTabView(l10n: l10n)
                     .transition(.opacity)

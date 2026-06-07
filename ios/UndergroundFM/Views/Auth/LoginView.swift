@@ -15,7 +15,9 @@ struct LoginView: View {
 
     var body: some View {
         ZStack {
-            AppColors.bg.ignoresSafeArea()
+            CinematicBackground()
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
 
             VStack(spacing: 0) {
                 // Top bar
@@ -40,7 +42,7 @@ struct LoginView: View {
 
                 Spacer().frame(height: AppSpacing.xxxl)
 
-                // Form
+                // Form — subtle dark layer behind the fields for readability.
                 VStack(spacing: AppSpacing.md) {
                     AppTextField(
                         placeholder: l10n.t("auth.email"),
@@ -72,6 +74,15 @@ struct LoginView: View {
                     }
                     .padding(.top, AppSpacing.sm)
                 }
+                .padding(AppSpacing.lg)
+                .background(
+                    RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
+                        .fill(.black.opacity(0.35))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
+                        .stroke(AppColors.border.opacity(0.4), lineWidth: 1)
+                )
                 .padding(.horizontal, AppSpacing.lg)
 
                 Spacer()
