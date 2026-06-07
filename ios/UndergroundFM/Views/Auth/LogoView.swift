@@ -35,17 +35,38 @@ struct LogoView: View {
     // MARK: - Badge (echte logo-asset met gele glow)
 
     private var badge: some View {
-        Image("LogoU")
+        let radius = AppRadius.md
+        let borderWidth = max(2, size * 0.045)
+
+        return Image("LogoU")
             .resizable()
             .scaledToFit()
+            .padding(size * 0.18)
             .frame(width: size, height: size)
             .background(
-                // Gele glow eronder
-                RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
+                // Donkere/glazen vulling
+                RoundedRectangle(cornerRadius: radius, style: .continuous)
+                    .fill(Color.black.opacity(0.85))
+            )
+            .overlay(
+                // Buitenste gele rand
+                RoundedRectangle(cornerRadius: radius, style: .continuous)
+                    .stroke(AppColors.yellow, lineWidth: borderWidth)
+            )
+            .overlay(
+                // Tweede, subtiele gele rand voor diepte
+                RoundedRectangle(cornerRadius: radius - 3, style: .continuous)
+                    .stroke(AppColors.yellow.opacity(0.25), lineWidth: 1)
+                    .padding(borderWidth + 3)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
+            .background(
+                // Versterkte gele glow eronder zodat de badge lijkt te zweven
+                RoundedRectangle(cornerRadius: radius, style: .continuous)
                     .fill(AppColors.yellow)
-                    .blur(radius: size * 0.35)
-                    .opacity(0.25)
-                    .scaleEffect(0.9)
+                    .blur(radius: size * 0.4)
+                    .opacity(0.4)
+                    .scaleEffect(0.95)
             )
     }
 
