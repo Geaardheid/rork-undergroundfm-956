@@ -32,37 +32,21 @@ struct LogoView: View {
         }
     }
 
-    // MARK: - Badge (zwart vierkant + geel italic U)
+    // MARK: - Badge (echte logo-asset met gele glow)
 
     private var badge: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
-                .fill(AppColors.bg)
-                .overlay(
-                    RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
-                        .stroke(AppColors.yellow, lineWidth: max(2, size * 0.045))
-                )
-
-            // Innerlijke schaduw via tweede stroke (subtiel)
-            RoundedRectangle(cornerRadius: AppRadius.md - 2, style: .continuous)
-                .stroke(AppColors.yellow.opacity(0.25), lineWidth: 1)
-                .padding(max(3, size * 0.06))
-
-            Text("U")
-                .font(.system(size: size * 0.6, weight: .black, design: .rounded))
-                .foregroundStyle(AppColors.yellow)
-                .italic()
-                .offset(x: -size * 0.015)
-        }
-        .frame(width: size, height: size)
-        .background(
-            // Gele glow eronder
-            RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
-                .fill(AppColors.yellow)
-                .blur(radius: size * 0.35)
-                .opacity(0.25)
-                .scaleEffect(0.9)
-        )
+        Image("logo")
+            .resizable()
+            .scaledToFit()
+            .frame(width: size, height: size)
+            .background(
+                // Gele glow eronder
+                RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
+                    .fill(AppColors.yellow)
+                    .blur(radius: size * 0.35)
+                    .opacity(0.25)
+                    .scaleEffect(0.9)
+            )
     }
 
     // MARK: - Wordmark
