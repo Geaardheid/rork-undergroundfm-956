@@ -94,7 +94,7 @@ struct PlayingIndicator: View {
                 .frame(height: 26, alignment: .center)
                 .onAppear { animate = true }
             } else {
-                Image(systemName: "pause.fill")
+                Image(systemName: "play.fill")
                     .font(.system(size: 26, weight: .black))
                     .foregroundStyle(AppColors.yellow)
             }

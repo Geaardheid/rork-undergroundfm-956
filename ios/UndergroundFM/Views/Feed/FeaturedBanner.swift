@@ -9,6 +9,8 @@ struct FeaturedBanner: View {
     let track: Track?
     let isLoading: Bool
     @Bindable var l10n: L10n
+    var isCurrent: Bool = false
+    var isPlaying: Bool = false
     var onTap: () -> Void = {}
 
     var body: some View {
@@ -82,10 +84,10 @@ struct FeaturedBanner: View {
             Circle()
                 .fill(AppColors.yellow)
                 .frame(width: 52, height: 52)
-            Image(systemName: "play.fill")
+            Image(systemName: (isCurrent && isPlaying) ? "pause.fill" : "play.fill")
                 .font(.system(size: 20, weight: .black))
                 .foregroundStyle(AppColors.yellowText)
-                .offset(x: 2)
+                .offset(x: (isCurrent && isPlaying) ? 0 : 2)
         }
     }
 

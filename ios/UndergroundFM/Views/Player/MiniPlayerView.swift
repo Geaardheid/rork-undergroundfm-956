@@ -81,9 +81,9 @@ struct MiniPlayerView: View {
 
                             // Skip forward
                             Button {
-                                player.skipForward()
+                                player.playNext()
                             } label: {
-                                Image(systemName: "forward.fill")
+                                Image(systemName: "forward.end.fill")
                                     .font(.system(size: 18, weight: .medium))
                                     .foregroundStyle(AppColors.textSecond)
                                     .frame(width: 44, height: 44)

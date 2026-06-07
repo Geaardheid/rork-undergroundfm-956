@@ -32,7 +32,15 @@ struct HomeFeedView: View {
                         track: track,
                         isLoading: false,
                         l10n: l10n,
-                        onTap: { MusicPlayer.shared.load(track: track) }
+                        isCurrent: feed.featured?.id == MusicPlayer.shared.currentTrack?.id,
+                        isPlaying: MusicPlayer.shared.isPlaying,
+                        onTap: {
+                            if MusicPlayer.shared.currentTrack?.id == track.id {
+                                MusicPlayer.shared.togglePlayPause()
+                            } else {
+                                MusicPlayer.shared.setQueue(featuredQueue(startingWith: track), startingAt: 0)
+                            }
+                        }
                     )
                 } else if feed.isFeaturedLoading {
                     FeaturedBanner(
@@ -76,6 +84,24 @@ struct HomeFeedView: View {
         .fullScreenCover(isPresented: $showSearch) {
             SearchView(l10n: l10n)
         }
+    }
+
+    /// Bouwt de wachtrij voor de featured banner: de featured track eerst,
+    /// gevolgd door alle geladen sectie-tracks, ontdubbeld op track.id.
+    private func featuredQueue(startingWith track: Track) -> [Track] {
+        var seen = Set<String>()
+        var queue: [Track] = []
+        if seen.insert(track.id).inserted {
+            queue.append(track)
+        }
+        for section in GenreSection.all {
+            if case .loaded(let tracks) = feed.state(for: section.id) {
+                for t in tracks where seen.insert(t.id).inserted {
+                    queue.append(t)
+                }
+            }
+        }
+        return queue
     }
 
     // MARK: - Floating transparante header (logo + iconen)
