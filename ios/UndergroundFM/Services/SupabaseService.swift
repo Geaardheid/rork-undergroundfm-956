@@ -65,7 +65,11 @@ nonisolated final class SupabaseService: @unchecked Sendable {
 
     func signUp(email: String, password: String) async throws -> (userId: String, accessToken: String?, refreshToken: String?) {
         guard isConfigured else { throw SupabaseError.missingConfig }
-        let endpoint = URL(string: "\(url)/auth/v1/signup")!
+        // Bak de redirect in de ConfirmationURL van de bevestigingsmail, zodat de
+        // gebruiker na verificatie netjes terugkeert (mailtemplate blijft ongemoeid).
+        var components = URLComponents(string: "\(url)/auth/v1/signup")!
+        components.queryItems = [URLQueryItem(name: "redirect_to", value: "https://undergroundfm.nl/bevestigd")]
+        guard let endpoint = components.url else { throw SupabaseError.missingConfig }
         var req = URLRequest(url: endpoint)
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
