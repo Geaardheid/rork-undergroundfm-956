@@ -35,7 +35,7 @@ struct LogoView: View {
     // MARK: - Badge (echte logo-asset met gele glow)
 
     private var badge: some View {
-        Image("logo")
+        Image("LogoU")
             .resizable()
             .scaledToFit()
             .frame(width: size, height: size)
