@@ -1,33 +1,35 @@
-# Rework the player to switch between Audio and Video like YouTube Music
+# Cinematic 5-slide onboarding rework for Underground FM
 
-## What changes
+## Cinematic onboarding rework
 
-Right now the Video tab quietly runs a second, muted copy of the video and constantly nudges the audio to stay in sync — which causes the glitches, restarts, and drift you're hearing. I'll replace that with a clean "one track, two sources" model.
+A full visual overhaul of the welcome flow, expanding it from 3 to 5 slides with a code-drawn cinematic background — no image files, all built in SwiftUI, styled like undergroundfm.nl. Stays Android-portable and keeps all existing login/register logic untouched.
 
-## How it will work
+### The cinematic background (new, behind every slide)
+- Deep black base.
+- A slow, "breathing" yellow glow from the top that gently pulses and drifts (6–8s loop), positioned slightly differently per slide so each screen feels distinct.
+- A fine film-grain texture across the whole screen at low opacity — drawn once and held still (calm, battery-friendly), exactly as you chose.
+- A vignette: darker edges that brighten toward the centre.
+- A giant, faint "U" spray motif sitting low in the background, rotated, purely decorative.
+- All layers are non-interactive so buttons always work.
 
-- **Audio tab (default):** plays the song's audio with the cover art, exactly like today.
-- **Video tab:** plays the actual video file *with its own sound*. The muted-mirror approach is gone — the video is a real alternative way to experience the same track.
-- **Only one source ever plays at a time**, so there's never doubled or echoing audio.
+### Motion
+- Text and elements rise into place with a staggered fade + gentle upward move (~20px), triggered when each slide becomes active. Slow and filmic (0.6–0.9s) with increasing delays per element, echoing the website's "rise" animation.
 
-## Switching feels seamless
+### The 5 slides
+1. **The hook** (restyled): big "ALLEEN / UNDERGROUND" headline, subtitle, and the four stat badges.
+2. **What it is** (new): big heading + explanation — music and video from independent artists, no mainstream, no algorithm deciding what you hear.
+3. **Fairly paid** (new): big heading + explanation — a fair share of revenue goes to creators based on what you actually play. Shows three numbers prominently: €5/month, 50% to artists, 100 founding spots.
+4. **Who are you** (restyled): Fan / Artist role choice — selection logic unchanged.
+5. **Be there** (restyled): Register button and Login link — logic unchanged.
 
-- When you tap between Audio and Video, the player remembers exactly where you are in the track, swaps to the other source, and picks up from the same spot.
-- It keeps your play/pause state — if music was playing, it keeps playing; if paused, it stays paused.
-- A brief "loading" moment on switch is expected while the new source buffers.
+### Behaviour
+- The dots indicator and Next button update to cover all 5 slides.
+- The Next button advances through all five slides as before.
+- Free swiping between slides stays.
+- Readable light text guaranteed via an extra dark gradient behind text blocks where needed.
 
-## Everything keeps working on whichever source is active
+### Text in all three languages
+- New wording added for the two new slides (titles + body) in Dutch, English, and Spanish, consistent with the existing onboarding text. The three key numbers reuse existing copy where possible.
 
-- The scrubber, play/pause, and skip controls always control whatever is currently playing (audio or video).
-- The lock screen / Now Playing controls keep working and reflect the active source.
-- The 30-second preview limit for non-subscribers still applies on both audio and video.
-
-## Behavior details (from your answers)
-
-- Each **new track always opens on the Audio tab** by default.
-- For tracks **without a video, the Video tab stays hidden** entirely.
-- When a track changes or playback is cleared, **both sources are torn down cleanly** so nothing lingers in the background.
-
-## What's being removed
-
-- The old "muted video mirrors the audio" logic and the start/stop sync routines that ran every time the Video tab appeared or disappeared. The video player no longer fights the audio player for timing.
+### What stays exactly the same
+- All authentication logic, the login/register callbacks, the artist-role selection, and navigation — only the visuals and the two new in-between slides change.
