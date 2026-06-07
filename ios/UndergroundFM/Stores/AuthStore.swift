@@ -86,7 +86,7 @@ final class AuthStore {
         isLoading = false
     }
 
-    func signUpFan(email: String, password: String, displayName: String) async {
+    func signUpFan(email: String, password: String, displayName: String, genrePreferences: [String] = []) async {
         isLoading = true
         errorMessage = nil
         do {
@@ -94,7 +94,8 @@ final class AuthStore {
                 email: email,
                 password: password,
                 displayName: displayName,
-                language: L10n.shared.language
+                language: L10n.shared.language,
+                genrePreferences: genrePreferences
             )
             switch outcome {
             case .completed(let user):
@@ -106,7 +107,8 @@ final class AuthStore {
                     displayName: displayName,
                     isArtist: false,
                     inviteCode: nil,
-                    language: L10n.shared.language.rawValue
+                    language: L10n.shared.language.rawValue,
+                    genrePreferences: genrePreferences
                 ))
                 self.awaitingConfirmation = true
             }
@@ -114,6 +116,28 @@ final class AuthStore {
             self.errorMessage = error.localizedDescription
         }
         isLoading = false
+    }
+
+    /// Werk de genre-voorkeuren van de huidige fan bij (vanuit Instellingen).
+    /// Past de lokale staat direct aan zodat de home-feed meteen meebeweegt.
+    func updateGenrePreferences(_ genres: [String]) async -> Bool {
+        guard let user = currentUser,
+              let token = SessionStore.shared.session?.accessToken else {
+            self.errorMessage = L10n.shared.t("errors.unknown")
+            return false
+        }
+        do {
+            try await AuthService.shared.updateGenrePreferences(
+                userId: user.id,
+                genres: genres,
+                accessToken: token
+            )
+            currentUser?.genrePreferences = genres
+            return true
+        } catch {
+            self.errorMessage = error.localizedDescription
+            return false
+        }
     }
 
     func signUpArtist(email: String, password: String, displayName: String, inviteCode: String) async {
@@ -138,7 +162,8 @@ final class AuthStore {
                     displayName: displayName,
                     isArtist: true,
                     inviteCode: inviteCode,
-                    language: L10n.shared.language.rawValue
+                    language: L10n.shared.language.rawValue,
+                    genrePreferences: nil
                 ))
                 self.awaitingConfirmation = true
             }
@@ -323,7 +348,8 @@ final class AuthStore {
                         email: pending.email,
                         password: pending.password,
                         displayName: pending.displayName,
-                        language: lang
+                        language: lang,
+                        genrePreferences: pending.genrePreferences ?? []
                     )
                 }
                 // Geslaagd: log in en ruim de pending-gegevens op.
@@ -363,4 +389,6 @@ nonisolated struct PendingSignUp: Codable {
     let isArtist: Bool
     let inviteCode: String?
     let language: String
+    /// Optioneel zodat oudere opgeslagen pending-signups blijven decoderen.
+    let genrePreferences: [String]?
 }

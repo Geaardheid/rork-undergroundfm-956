@@ -28,15 +28,27 @@ final class FeedStore {
         sections[sectionId] ?? .idle
     }
 
-    /// Laadt featured + alle secties sequentieel (geen gelijktijdige task-cancellation).
+    /// Laadt featured + secties sequentieel (geen gelijktijdige task-cancellation).
     /// Bestaande data blijft zichtbaar tot nieuwe data succesvol binnen is.
-    func loadAll() async {
+    ///
+    /// `preferences`: niet-lege lijst van genre-keys → laad alleen die secties.
+    /// Lege lijst → laad alle secties (nooit een lege feed). De featured banner
+    /// laadt altijd, ongeacht de voorkeuren.
+    func loadAll(preferences: [String] = []) async {
         await loadFeatured()
-        for section in GenreSection.all {
+        for section in sections(for: preferences) {
             await load(section: section)
             // Kleine adempauze zodat opeenvolgende fetches elkaar niet verdringen.
             try? await Task.sleep(for: .milliseconds(80))
         }
+    }
+
+    /// Zichtbare secties op basis van de fan-voorkeuren. Lege voorkeuren = alles.
+    func sections(for preferences: [String]) -> [GenreSection] {
+        guard !preferences.isEmpty else { return GenreSection.all }
+        let prefSet = Set(preferences)
+        let filtered = GenreSection.all.filter { prefSet.contains($0.genre) }
+        return filtered.isEmpty ? GenreSection.all : filtered
     }
 
     func load(section: GenreSection) async {

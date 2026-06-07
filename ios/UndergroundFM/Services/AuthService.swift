@@ -30,7 +30,7 @@ final class AuthService {
     //
     // NB: Stel de redirect URL in Supabase Dashboard → Authentication → URL
     // Configuration in op: undergroundfm://auth/callback
-    func signUpFan(email: String, password: String, displayName: String, language: AppLanguage) async throws -> SignUpOutcome {
+    func signUpFan(email: String, password: String, displayName: String, language: AppLanguage, genrePreferences: [String] = []) async throws -> SignUpOutcome {
         let result: (userId: String, accessToken: String?, refreshToken: String?)
         do {
             result = try await sb.signUp(email: email, password: password)
@@ -54,21 +54,23 @@ final class AuthService {
             role: .consumer,
             isFoundingArtist: false,
             language: language,
-            accessToken: session.accessToken
+            accessToken: session.accessToken,
+            genrePreferences: genrePreferences
         )
         SessionStore.shared.save(session)
         return .completed(userRow)
     }
 
     /// Rond een fan-registratie af na e-mailbevestiging.
-    func completeFan(email: String, password: String, displayName: String, language: AppLanguage) async throws -> AppUser {
+    func completeFan(email: String, password: String, displayName: String, language: AppLanguage, genrePreferences: [String] = []) async throws -> AppUser {
         let session = try await sb.signIn(email: email, password: password)
         let user = try await fetchOrCreateUserRow(
             session: session,
             displayName: displayName,
             role: .consumer,
             isFoundingArtist: false,
-            language: language
+            language: language,
+            genrePreferences: genrePreferences
         )
         SessionStore.shared.save(session)
         return user
@@ -171,6 +173,16 @@ final class AuthService {
         SessionStore.shared.clear()
     }
 
+    /// Werk de genre-voorkeuren van de huidige gebruiker bij.
+    func updateGenrePreferences(userId: String, genres: [String], accessToken: String) async throws {
+        try await sb.update(
+            table: "users",
+            query: ["id": "eq.\(userId)"],
+            values: ["genre_preferences": genres],
+            accessToken: accessToken
+        )
+    }
+
     // MARK: - Helpers
 
     /// Bepaalt of een signup-fout betekent dat de bevestigingsmail in feite al is
@@ -210,7 +222,8 @@ final class AuthService {
         displayName: String?,
         role: UserRole,
         isFoundingArtist: Bool,
-        language: AppLanguage
+        language: AppLanguage,
+        genrePreferences: [String] = []
     ) async throws -> AppUser {
         let existing: [AppUser] = try await sb.select(
             AppUser.self,
@@ -226,7 +239,8 @@ final class AuthService {
             role: role,
             isFoundingArtist: isFoundingArtist,
             language: language,
-            accessToken: session.accessToken
+            accessToken: session.accessToken,
+            genrePreferences: genrePreferences
         )
     }
 
@@ -296,14 +310,16 @@ final class AuthService {
         role: UserRole,
         isFoundingArtist: Bool,
         language: AppLanguage,
-        accessToken: String
+        accessToken: String,
+        genrePreferences: [String] = []
     ) async throws -> AppUser {
         var values: [String: Any] = [
             "id": userId,
             "email": email,
             "role": role.rawValue,
             "is_founding_artist": isFoundingArtist,
-            "preferred_language": language.rawValue
+            "preferred_language": language.rawValue,
+            "genre_preferences": genrePreferences
         ]
         if let displayName = displayName {
             values["display_name"] = displayName

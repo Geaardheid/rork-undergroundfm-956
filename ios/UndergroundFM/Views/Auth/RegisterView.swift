@@ -7,6 +7,7 @@ import SwiftUI
 
 private enum RegisterStep {
     case details
+    case genres
     case inviteCode
 }
 
@@ -23,10 +24,17 @@ struct RegisterView: View {
     @State private var displayName: String = ""
     @State private var isArtist: Bool = false
     @State private var inviteCode: String = ""
+    @State private var selectedGenres: Set<String> = []
 
     var body: some View {
         ZStack {
-            AppColors.bg.ignoresSafeArea()
+            if step == .genres {
+                CinematicBackground(stop: 1)
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+            } else {
+                AppColors.bg.ignoresSafeArea()
+            }
 
             VStack(spacing: 0) {
                 header
@@ -36,6 +44,8 @@ struct RegisterView: View {
                         switch step {
                         case .details:
                             detailsForm
+                        case .genres:
+                            genresForm
                         case .inviteCode:
                             inviteForm
                         }
@@ -55,7 +65,7 @@ struct RegisterView: View {
     private var header: some View {
         HStack {
             Button {
-                if step == .inviteCode {
+                if step == .inviteCode || step == .genres {
                     step = .details
                     auth.clearError()
                 } else {
@@ -132,20 +142,61 @@ struct RegisterView: View {
                 isLoading: auth.isLoading,
                 isDisabled: !canContinueStep1
             ) {
-                if isArtist {
-                    auth.clearError()
-                    step = .inviteCode
-                } else {
-                    Task {
-                        await auth.signUpFan(
-                            email: email.trimmingCharacters(in: .whitespaces),
-                            password: password,
-                            displayName: displayName.trimmingCharacters(in: .whitespaces)
-                        )
-                    }
-                }
+                auth.clearError()
+                step = isArtist ? .inviteCode : .genres
             }
             .padding(.top, AppSpacing.md)
+        }
+    }
+
+    // MARK: - Step: genre preferences (fan only)
+
+    private var genresForm: some View {
+        VStack(spacing: AppSpacing.lg) {
+            VStack(spacing: AppSpacing.sm) {
+                Text(l10n.t("genres.title"))
+                    .font(.system(size: AppFontSize.xxl, weight: .black, design: .rounded))
+                    .foregroundStyle(AppColors.textPrimary)
+                    .multilineTextAlignment(.center)
+                    .shadow(color: .black.opacity(0.6), radius: 10, y: 4)
+                Text(l10n.t("genres.subtitle"))
+                    .font(.system(size: AppFontSize.sm, weight: .medium))
+                    .foregroundStyle(AppColors.textSecond)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, AppSpacing.md)
+            }
+            .padding(.top, AppSpacing.sm)
+
+            GenrePickerGrid(selected: $selectedGenres, compact: true)
+
+            PrimaryButton(
+                title: l10n.t("genres.continue"),
+                isLoading: auth.isLoading,
+                isDisabled: selectedGenres.isEmpty
+            ) {
+                submitFan(genres: Array(selectedGenres))
+            }
+            .padding(.top, AppSpacing.sm)
+
+            Button {
+                submitFan(genres: [])
+            } label: {
+                Text(l10n.t("genres.skip"))
+                    .font(.system(size: AppFontSize.base, weight: .semibold))
+                    .foregroundStyle(AppColors.textSecond)
+            }
+            .disabled(auth.isLoading)
+        }
+    }
+
+    private func submitFan(genres: [String]) {
+        Task {
+            await auth.signUpFan(
+                email: email.trimmingCharacters(in: .whitespaces),
+                password: password,
+                displayName: displayName.trimmingCharacters(in: .whitespaces),
+                genrePreferences: genres
+            )
         }
     }
 

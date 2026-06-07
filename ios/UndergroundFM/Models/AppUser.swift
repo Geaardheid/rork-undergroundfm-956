@@ -20,6 +20,8 @@ nonisolated struct AppUser: Codable, Identifiable, Equatable {
     var preferredLanguage: String
     var subscriptionStatus: String?
     var avatarUrl: String?
+    /// Genre-keys (bv. "drill","trap") die de fan koos in de onboarding. Leeg = geen filter.
+    var genrePreferences: [String]
 
     var hasActiveSubscription: Bool {
         subscriptionStatus == "active" || subscriptionStatus == "trial"
@@ -34,6 +36,20 @@ nonisolated struct AppUser: Codable, Identifiable, Equatable {
         case preferredLanguage = "preferred_language"
         case subscriptionStatus = "subscription_status"
         case avatarUrl = "avatar_url"
+        case genrePreferences = "genre_preferences"
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        email = try c.decode(String.self, forKey: .email)
+        displayName = try c.decodeIfPresent(String.self, forKey: .displayName)
+        role = try c.decode(UserRole.self, forKey: .role)
+        isFoundingArtist = try c.decode(Bool.self, forKey: .isFoundingArtist)
+        preferredLanguage = try c.decode(String.self, forKey: .preferredLanguage)
+        subscriptionStatus = try c.decodeIfPresent(String.self, forKey: .subscriptionStatus)
+        avatarUrl = try c.decodeIfPresent(String.self, forKey: .avatarUrl)
+        genrePreferences = try c.decodeIfPresent([String].self, forKey: .genrePreferences) ?? []
     }
 }
 

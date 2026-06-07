@@ -1,35 +1,42 @@
-# Cinematic 5-slide onboarding rework for Underground FM
+# Genre-voorkeuren voor fans + gefilterde home-feed
 
-## Cinematic onboarding rework
+## Wat we bouwen
 
-A full visual overhaul of the welcome flow, expanding it from 3 to 5 slides with a code-drawn cinematic background — no image files, all built in SwiftUI, styled like undergroundfm.nl. Stays Android-portable and keeps all existing login/register logic untouched.
+Fans kiezen tijdens registratie welke muziekstijlen ze willen horen. Die keuze wordt veilig opgeslagen en de home-feed toont daarna alleen die genres. Artiesten zien deze stap niet — hun flow blijft exact hetzelfde.
 
-### The cinematic background (new, behind every slide)
-- Deep black base.
-- A slow, "breathing" yellow glow from the top that gently pulses and drifts (6–8s loop), positioned slightly differently per slide so each screen feels distinct.
-- A fine film-grain texture across the whole screen at low opacity — drawn once and held still (calm, battery-friendly), exactly as you chose.
-- A vignette: darker edges that brighten toward the centre.
-- A giant, faint "U" spray motif sitting low in the background, rotated, purely decorative.
-- All layers are non-interactive so buttons always work.
+## Database
 
-### Motion
-- Text and elements rise into place with a staggered fade + gentle upward move (~20px), triggered when each slide becomes active. Slow and filmic (0.6–0.9s) with increasing delays per element, echoing the website's "rise" animation.
+- Aan de gebruikersgegevens wordt een veld toegevoegd voor de gekozen genres (standaard leeg).
+- De beveiligingsregels worden uitgebreid zodat elke gebruiker alleen z'n eigen voorkeuren kan lezen en aanpassen — geen nieuwe conflicterende regels, de bestaande worden netjes uitgebreid.
 
-### The 5 slides
-1. **The hook** (restyled): big "ALLEEN / UNDERGROUND" headline, subtitle, and the four stat badges.
-2. **What it is** (new): big heading + explanation — music and video from independent artists, no mainstream, no algorithm deciding what you hear.
-3. **Fairly paid** (new): big heading + explanation — a fair share of revenue goes to creators based on what you actually play. Shows three numbers prominently: €5/month, 50% to artists, 100 founding spots.
-4. **Who are you** (restyled): Fan / Artist role choice — selection logic unchanged.
-5. **Be there** (restyled): Register button and Login link — logic unchanged.
+## Nieuwe stap in de registratie (alleen voor fans)
 
-### Behaviour
-- The dots indicator and Next button update to cover all 5 slides.
-- The Next button advances through all five slides as before.
-- Free swiping between slides stays.
-- Readable light text guaranteed via an extra dark gradient behind text blocks where needed.
+- **Wanneer**: direct na het invullen van naam, e-mail en wachtwoord, voordat het account wordt aangemaakt.
+- **Vraag**: "Wat luister je?" met een korte uitleg eronder.
+- **Grid**: de zes stijlen (Rap, Drill, Afro, Trap, R&B, House) als tegels in 2 kolommen, iets compacter zodat alle zes zonder veel scrollen passen. Exact dezelfde visuele taal als het zoekscherm: emoji, kleurtint per genre en cover-art.
+- **Selectie**: tik om te kiezen/ontkiezen (meerdere mag). Een gekozen tegel krijgt een gele rand met een vinkje.
+- **Achtergrond**: de cinematische achtergrond van de onboarding eronder.
+- **Knoppen**: "Doorgaan" wordt pas actief zodra minstens één genre is gekozen; daaronder een subtiele "Overslaan" voor wie niets wil kiezen (dan worden geen voorkeuren opgeslagen).
 
-### Text in all three languages
-- New wording added for the two new slides (titles + body) in Dutch, English, and Spanish, consistent with the existing onboarding text. The three key numbers reuse existing copy where possible.
+## Opslaan
 
-### What stays exactly the same
-- All authentication logic, the login/register callbacks, the artist-role selection, and navigation — only the visuals and the two new in-between slides change.
+- De gekozen stijlen worden bij het aanmaken van het fan-account opgeslagen. Werkt ook netjes als het account pas na e-mailbevestiging wordt afgerond — de keuze blijft bewaard tot de registratie rond is.
+- Geen keuze of overslaan = leeg, geen filter.
+
+## Home-feed filteren
+
+- Heeft een fan genres gekozen, dan laadt de home-feed alleen die secties.
+- Heeft een fan niets gekozen, dan laadt de feed gewoon alles (nooit een lege feed).
+- De uitgelichte banner bovenaan blijft altijd laden, ongeacht de voorkeuren.
+
+## Later aanpassen (Instellingen)
+
+- In Instellingen komt een nieuwe optie "Mijn genres" waarmee een fan z'n voorkeuren op elk moment kan bijwerken, met hetzelfde tegel-grid. Wijzigingen werken meteen door in de home-feed.
+
+## Taal
+
+- Alle nieuwe teksten (titel "Wat luister je?", uitleg, "Doorgaan", "Overslaan", en de Instellingen-optie) komen in Nederlands, Engels en Spaans, in lijn met de bestaande teksten.
+
+## Wat onveranderd blijft
+
+- De artiest-flow, de invite-code-stap, de betaal-logica en de bestaande genre-definities. De werkende registratie blijft intact. Alles blijft geschikt voor zowel iOS als een latere Android-versie.

@@ -6,10 +6,15 @@
 import SwiftUI
 
 struct HomeFeedView: View {
+    @Environment(AuthStore.self) private var auth
     @Bindable var l10n: L10n
     @State private var feed = FeedStore()
     @State private var path = NavigationPath()
     @State private var showSearch: Bool = false
+
+    private var preferences: [String] {
+        auth.currentUser?.genrePreferences ?? []
+    }
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -25,7 +30,7 @@ struct HomeFeedView: View {
     }
 
     private var content: some View {
-        FloatingHeaderScreen(header: { header }, onRefresh: { await feed.loadAll() }) {
+        FloatingHeaderScreen(header: { header }, onRefresh: { await feed.loadAll(preferences: preferences) }) {
             LazyVStack(alignment: .leading, spacing: AppSpacing.xxl) {
                 if let track = feed.featured {
                     FeaturedBanner(
@@ -50,7 +55,7 @@ struct HomeFeedView: View {
                     )
                 }
 
-                ForEach(GenreSection.all) { section in
+                ForEach(feed.sections(for: preferences)) { section in
                     GenreRow(
                         section: section,
                         state: feed.state(for: section.id),
@@ -78,8 +83,12 @@ struct HomeFeedView: View {
         }
         .task {
             if feed.featured == nil {
-                await feed.loadAll()
+                await feed.loadAll(preferences: preferences)
             }
+        }
+        .onChange(of: preferences) { _, newValue in
+            // Voorkeuren gewijzigd (bv. via Instellingen) → feed opnieuw laden.
+            Task { await feed.loadAll(preferences: newValue) }
         }
         .fullScreenCover(isPresented: $showSearch) {
             SearchView(l10n: l10n)

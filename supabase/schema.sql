@@ -20,13 +20,22 @@ CREATE TABLE IF NOT EXISTS public.users (
   preferred_language TEXT NOT NULL DEFAULT 'nl'
     CHECK (preferred_language IN ('nl','en','es')),
   country TEXT DEFAULT 'NL',
+  genre_preferences TEXT[] NOT NULL DEFAULT '{}',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Voeg de kolom ook toe aan bestaande databases (idempotent).
+ALTER TABLE public.users
+  ADD COLUMN IF NOT EXISTS genre_preferences TEXT[] NOT NULL DEFAULT '{}';
+
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+-- De gebruiker mag alleen z'n eigen row lezen/aanpassen (incl. genre_preferences).
+-- USING dekt SELECT/UPDATE/DELETE; WITH CHECK borgt dat een UPDATE de eigenaar laat.
 DROP POLICY IF EXISTS "users_own_row" ON public.users;
-CREATE POLICY "users_own_row" ON public.users USING (auth.uid() = id);
+CREATE POLICY "users_own_row" ON public.users
+  USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id);
 DROP POLICY IF EXISTS "users_insert_own" ON public.users;
 CREATE POLICY "users_insert_own" ON public.users FOR INSERT WITH CHECK (auth.uid() = id);
 

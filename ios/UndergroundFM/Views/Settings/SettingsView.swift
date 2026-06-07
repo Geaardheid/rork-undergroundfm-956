@@ -23,6 +23,7 @@ struct SettingsView: View {
     @State private var showDeleteAccount: Bool = false
     @State private var showPrivacy: Bool = false
     @State private var showTerms: Bool = false
+    @State private var showGenres: Bool = false
 
     var body: some View {
         ZStack {
@@ -31,6 +32,9 @@ struct SettingsView: View {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: AppSpacing.xl) {
                     subscriptionSection
+                    if auth.currentUser?.role != .artist {
+                        genresSection
+                    }
                     accountSection
                     audioSection
                     notificationsSection
@@ -65,6 +69,11 @@ struct SettingsView: View {
         .sheet(isPresented: $showTerms) {
             PlaceholderSheet(title: l10n.t("settings.terms"), message: l10n.t("settings.termsBody"))
                 .presentationDetents([.medium])
+                .presentationBackground(AppColors.bg)
+        }
+        .sheet(isPresented: $showGenres) {
+            MyGenresSheet(l10n: l10n)
+                .presentationDetents([.large])
                 .presentationBackground(AppColors.bg)
         }
         .task { await loadFollowedArtists() }
@@ -123,6 +132,16 @@ struct SettingsView: View {
             Spacer()
         }
         .padding(AppSpacing.md)
+    }
+
+    // MARK: - Genres
+
+    private var genresSection: some View {
+        SettingsSection(title: l10n.t("settings.sectionGenres")) {
+            SettingsRow(icon: "music.note.list", title: l10n.t("settings.myGenres")) {
+                showGenres = true
+            }
+        }
     }
 
     // MARK: - Account
