@@ -294,33 +294,58 @@ final class AuthStore {
     }
 
     /// Probeer een wachtende registratie af te ronden zodra de e-mail bevestigd is.
+    ///
+    /// Supabase heeft de bevestiging soms nét nog niet verwerkt wanneer de app weer
+    /// actief wordt, dus we proberen het tot 3 keer met een korte pauze. Tijdens de
+    /// pogingen tonen we een laad-staat en GEEN foutmelding; de pending-gegevens
+    /// blijven bewaard tot een poging slaagt zodat een volgende trigger opnieuw kan.
     private func tryCompletePendingSignUp(_ pending: PendingSignUp) async {
         let lang = AppLanguage(rawValue: pending.language) ?? .nl
-        do {
-            let user: AppUser
-            if pending.isArtist, let code = pending.inviteCode {
-                user = try await AuthService.shared.completeArtist(
-                    email: pending.email,
-                    password: pending.password,
-                    displayName: pending.displayName,
-                    inviteCode: code,
-                    language: lang
-                )
-            } else {
-                user = try await AuthService.shared.completeFan(
-                    email: pending.email,
-                    password: pending.password,
-                    displayName: pending.displayName,
-                    language: lang
-                )
+        let maxAttempts = 3
+
+        isLoading = true
+        errorMessage = nil
+        awaitingConfirmation = true
+
+        for attempt in 1...maxAttempts {
+            do {
+                let user: AppUser
+                if pending.isArtist, let code = pending.inviteCode {
+                    user = try await AuthService.shared.completeArtist(
+                        email: pending.email,
+                        password: pending.password,
+                        displayName: pending.displayName,
+                        inviteCode: code,
+                        language: lang
+                    )
+                } else {
+                    user = try await AuthService.shared.completeFan(
+                        email: pending.email,
+                        password: pending.password,
+                        displayName: pending.displayName,
+                        language: lang
+                    )
+                }
+                // Geslaagd: log in en ruim de pending-gegevens op.
+                self.currentUser = user
+                if user.role == .artist { await self.loadArtistId() }
+                self.awaitingConfirmation = false
+                clearPending()
+                isLoading = false
+                return
+            } catch {
+                // Nog niet bevestigd (sign-in faalt). Wacht en probeer opnieuw,
+                // zonder de pending-gegevens te wissen of een fout te tonen.
+                if attempt < maxAttempts {
+                    try? await Task.sleep(nanoseconds: 1_500_000_000)
+                }
             }
-            self.currentUser = user
-            if user.role == .artist { await self.loadArtistId() }
-            self.awaitingConfirmation = false
-            clearPending()
-        } catch {
-            // Nog niet bevestigd (sign-in faalt) — blijf op het verify-scherm.
         }
+
+        // Pas na alle mislukte pogingen: toon de bestaande "nog niet bevestigd"-staat.
+        // pending blijft bewaard zodat een volgende scenePhase-active of
+        // "Ik heb bevestigd"-tik opnieuw kan proberen.
+        isLoading = false
     }
 
     /// Annuleer de wachtende bevestiging en ga terug naar het inlogscherm.
