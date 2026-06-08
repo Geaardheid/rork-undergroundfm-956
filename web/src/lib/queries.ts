@@ -29,7 +29,7 @@ export async function fetchGenreTracks(
 export async function fetchArtist(artistId: string): Promise<ArtistProfile | null> {
   const { data, error } = await supabase
     .from("artists")
-    .select("id,user_id,artist_name,bio,genre_tags,instagram_url,instagram_handle,banner_url,avatar_url,verified")
+    .select("*")
     .eq("id", artistId)
     .maybeSingle();
   if (error) throw new Error(error.message);

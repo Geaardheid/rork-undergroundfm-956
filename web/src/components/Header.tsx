@@ -20,9 +20,11 @@ export function Header() {
           className="flex items-center gap-2"
           aria-label="Home"
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary font-display text-lg font-black text-primary-foreground">
-            U
-          </span>
+          <img
+            src="/logo-u.png"
+            alt="UndergroundFM"
+            className="h-8 w-8 object-contain"
+          />
           <span className="font-display text-lg font-extrabold tracking-tight">
             UNDERGROUND<span className="text-primary">FM</span>
           </span>
