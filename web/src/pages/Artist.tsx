@@ -62,9 +62,9 @@ export default function Artist() {
   const igHandle = normalizeInstagram(artist.instagram_handle ?? artist.instagram_url);
 
   return (
-    <div>
+    <div className="pb-8">
       {/* Banner */}
-      <div className="relative h-48 w-full overflow-hidden bg-secondary sm:h-64">
+      <div className="relative h-40 w-full shrink-0 overflow-hidden bg-secondary sm:h-56">
         {artist.banner_url ? (
           <img src={artist.banner_url} alt="" className="h-full w-full object-cover" />
         ) : (
@@ -81,9 +81,9 @@ export default function Artist() {
         </button>
       </div>
 
-      <div className="mx-auto max-w-4xl px-4">
+      <div className="relative z-10 mx-auto -mt-12 max-w-4xl px-4">
         {/* Header */}
-        <div className="-mt-12 flex items-end gap-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
           <div className="h-24 w-24 shrink-0 overflow-hidden rounded-2xl border-4 border-background bg-secondary">
             {artist.avatar_url ? (
               <img src={artist.avatar_url} alt={artist.artist_name} className="h-full w-full object-cover" />
@@ -93,7 +93,7 @@ export default function Artist() {
               </div>
             )}
           </div>
-          <div className="pb-1">
+          <div className="sm:pb-1">
             <h1 className="flex items-center gap-2 font-display text-2xl font-extrabold tracking-tight sm:text-3xl">
               {artist.artist_name}
               {artist.verified && <BadgeCheck className="h-6 w-6 text-primary" />}

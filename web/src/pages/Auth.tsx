@@ -68,9 +68,11 @@ export default function Auth() {
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm animate-fade-up">
         <div className="mb-8 text-center">
-          <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-primary font-display text-3xl font-black text-primary-foreground glow-yellow">
-            U
-          </span>
+          <img
+            src="/logo-u.png"
+            alt="UndergroundFM"
+            className="mx-auto h-14 w-14 object-contain glow-yellow"
+          />
           <h1 className="mt-4 font-display text-2xl font-extrabold tracking-tight">
             UNDERGROUND<span className="text-primary">FM</span>
           </h1>
