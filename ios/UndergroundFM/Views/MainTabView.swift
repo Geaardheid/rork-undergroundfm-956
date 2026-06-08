@@ -46,6 +46,7 @@ enum AppTab: String, CaseIterable, Identifiable {
 struct MainTabView: View {
     @Environment(AuthStore.self) private var auth
     @Environment(SubscriptionService.self) private var subscription
+    @Environment(StreakManager.self) private var streak
     @Bindable var l10n: L10n
     @State private var selected: AppTab = .home
     @State private var showFullPlayer: Bool = false
@@ -73,7 +74,18 @@ struct MainTabView: View {
             .safeAreaInset(edge: .bottom) {
                 bottomArea
             }
+
+            if let celebration = streak.pendingCelebration {
+                StreakCelebrationView(
+                    celebration: celebration,
+                    l10n: l10n,
+                    onContinue: { streak.dismissCelebration() }
+                )
+                .transition(.opacity)
+                .zIndex(100)
+            }
         }
+        .animation(.easeInOut(duration: 0.3), value: streak.pendingCelebration)
         .sheet(isPresented: $showFullPlayer) {
             PlayerView(l10n: l10n, onTapArtist: { route in
                 showFullPlayer = false

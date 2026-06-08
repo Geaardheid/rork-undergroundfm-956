@@ -1,42 +1,36 @@
-# Genre-voorkeuren voor fans + gefilterde home-feed
+# Duolingo-style daily streak celebration for UndergroundFM
 
-## Wat we bouwen
+## What this adds
 
-Fans kiezen tijdens registratie welke muziekstijlen ze willen horen. Die keuze wordt veilig opgeslagen en de home-feed toont daarna alleen die genres. Artiesten zien deze stap niet — hun flow blijft exact hetzelfde.
+A full-screen, on-brand (yellow #FFE000 / black #0A0A0A / fire) celebration that pops up the moment a fan finishes listening to a track all the way through and their daily streak goes up — just like Duolingo's streak screen.
 
-## Database
+## Features
 
-- Aan de gebruikersgegevens wordt een veld toegevoegd voor de gekozen genres (standaard leeg).
-- De beveiligingsregels worden uitgebreid zodat elke gebruiker alleen z'n eigen voorkeuren kan lezen en aanpassen — geen nieuwe conflicterende regels, de bestaande worden netjes uitgebreid.
+- **Daily streak tracking** — when a track plays fully to the end (not on skip), the app tells the server "I listened today." If that bumps the streak to a new day, a celebration plays. It only counts once per finished track.
+- **Cinematic celebration overlay** — appears above everything (including the mini player):
+  - Background animates from black into a fiery yellow→orange→deep-black glow with subtle film grain.
+  - A glowing, pulsing flame burst in the center (drawn in code, no image files), with the UndergroundFM "U" logo popping/zooming in on top and yellow/orange sparkle particles flying out.
+  - The streak number shows the previous count first, then ~0.8s later flips with a pop to the new number (large, bold, white), with "dagen op een rij" underneath.
+  - A row of 7 day-circles (ma di wo do vr za zo) where the achieved days light up one after another with a checkmark.
+  - Haptics: a heavy thump on the burst, a medium tap on the number flip, and a light tick for each day that lights up.
+- **Buttons at the bottom**:
+  - A white **"DEEL MIJLPAAL"** button that opens the normal share sheet with text like "🔥 7 dagen op rij op UndergroundFM" plus the app link.
+  - A bordered, transparent **"DOORGAAN"** button that closes the celebration.
 
-## Nieuwe stap in de registratie (alleen voor fans)
+## Design
 
-- **Wanneer**: direct na het invullen van naam, e-mail en wachtwoord, voordat het account wordt aangemaakt.
-- **Vraag**: "Wat luister je?" met een korte uitleg eronder.
-- **Grid**: de zes stijlen (Rap, Drill, Afro, Trap, R&B, House) als tegels in 2 kolommen, iets compacter zodat alle zes zonder veel scrollen passen. Exact dezelfde visuele taal als het zoekscherm: emoji, kleurtint per genre en cover-art.
-- **Selectie**: tik om te kiezen/ontkiezen (meerdere mag). Een gekozen tegel krijgt een gele rand met een vinkje.
-- **Achtergrond**: de cinematische achtergrond van de onboarding eronder.
-- **Knoppen**: "Doorgaan" wordt pas actief zodra minstens één genre is gekozen; daaronder een subtiele "Overslaan" voor wie niets wil kiezen (dan worden geen voorkeuren opgeslagen).
+- Deep-black base bleeding into a warm fire gradient (brand yellow into orange), matching the existing cinematic look used on onboarding/login.
+- Brand yellow accents, white bold streak number, rounded day-circles that fill with yellow + black checkmark as they complete.
+- Everything uses the existing design tokens (colors, spacing, radius, fonts) so it feels native to the app.
+- Staggered, filmic timing so elements arrive in sequence rather than all at once.
 
-## Opslaan
+## How it behaves
 
-- De gekozen stijlen worden bij het aanmaken van het fan-account opgeslagen. Werkt ook netjes als het account pas na e-mailbevestiging wordt afgerond — de keuze blijft bewaard tot de registratie rond is.
-- Geen keuze of overslaan = leeg, geen filter.
+- The celebration is driven by a new streak helper kept at the app root, so it can show over any screen.
+- It listens for the "track finished" moment in the existing audio engine and asks the server to register today's listen.
+- The server side (the `register_daily_listen` function and streak columns) will be created by you in Supabase — the app only calls it and reads back `current_streak`, `longest_streak`, and whether the streak incremented today. The week-progress row is computed locally for now (all days up to today filled), ready to be swapped for real data later.
 
-## Home-feed filteren
+## Notes
 
-- Heeft een fan genres gekozen, dan laadt de home-feed alleen die secties.
-- Heeft een fan niets gekozen, dan laadt de feed gewoon alles (nooit een lege feed).
-- De uitgelichte banner bovenaan blijft altijd laden, ongeacht de voorkeuren.
-
-## Later aanpassen (Instellingen)
-
-- In Instellingen komt een nieuwe optie "Mijn genres" waarmee een fan z'n voorkeuren op elk moment kan bijwerken, met hetzelfde tegel-grid. Wijzigingen werken meteen door in de home-feed.
-
-## Taal
-
-- Alle nieuwe teksten (titel "Wat luister je?", uitleg, "Doorgaan", "Overslaan", en de Instellingen-optie) komen in Nederlands, Engels en Spaans, in lijn met de bestaande teksten.
-
-## Wat onveranderd blijft
-
-- De artiest-flow, de invite-code-stap, de betaal-logica en de bestaande genre-definities. De werkende registratie blijft intact. Alles blijft geschikt voor zowel iOS als een latere Android-versie.
+- The fire burst is built entirely in code (no Lottie, no image assets) so it stays portable to Android later. The "U" that zooms in reuses the existing LogoU logo asset.
+- No changes to playback, auth, payments, or existing features — this only adds the streak layer and its celebration screen.

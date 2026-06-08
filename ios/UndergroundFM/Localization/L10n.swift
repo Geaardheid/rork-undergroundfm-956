@@ -193,6 +193,12 @@ final class L10n {
         "player.plays": "plays",
         "player.shareText": "Luister naar %@ van %@ op UndergroundFM",
 
+        "streak.daysInARow": "dagen op een rij",
+        "streak.weekdays": "ma,di,wo,do,vr,za,zo",
+        "streak.share": "DEEL MIJLPAAL",
+        "streak.continue": "DOORGAAN",
+        "streak.shareText": "🔥 %d dagen op rij op UndergroundFM",
+
         "profile.settings": "Instellingen",
         "profile.notifications": "Meldingen",
         "profile.edit": "Bewerk",
@@ -439,6 +445,12 @@ final class L10n {
         "player.plays": "plays",
         "player.shareText": "Listen to %@ by %@ on UndergroundFM",
 
+        "streak.daysInARow": "days in a row",
+        "streak.weekdays": "Mo,Tu,We,Th,Fr,Sa,Su",
+        "streak.share": "SHARE MILESTONE",
+        "streak.continue": "CONTINUE",
+        "streak.shareText": "🔥 %d days in a row on UndergroundFM",
+
         "profile.settings": "Settings",
         "profile.notifications": "Notifications",
         "profile.edit": "Edit",
@@ -670,6 +682,12 @@ final class L10n {
         "player.clipSoonSub": "Pronto se añadirán los vídeos.",
         "player.plays": "reproducciones",
         "player.shareText": "Escucha %@ de %@ en UndergroundFM",
+
+        "streak.daysInARow": "días seguidos",
+        "streak.weekdays": "lu,ma,mi,ju,vi,sá,do",
+        "streak.share": "COMPARTIR HITO",
+        "streak.continue": "CONTINUAR",
+        "streak.shareText": "🔥 %d días seguidos en UndergroundFM",
 
         "profile.settings": "Ajustes",
         "profile.notifications": "Notificaciones",

@@ -327,6 +327,8 @@ final class MusicPlayer {
         ) { [weak self] _ in
             guard let self else { return }
             ViewTracker.shared.endSession()
+            // A full listen counts toward the daily streak (never on skip).
+            Task { await StreakManager.shared.registerDailyListen() }
             // Repeat the current track when repeat is enabled.
             if self.isRepeatEnabled {
                 self.seek(to: 0)

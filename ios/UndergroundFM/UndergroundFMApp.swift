@@ -11,6 +11,7 @@ struct UndergroundFMApp: App {
     @State private var auth = AuthStore()
     @State private var l10n = L10n.shared
     @State private var subscription = SubscriptionService.shared
+    @State private var streak = StreakManager.shared
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
@@ -18,6 +19,7 @@ struct UndergroundFMApp: App {
             RootView(l10n: l10n)
                 .environment(auth)
                 .environment(subscription)
+                .environment(streak)
                 .preferredColorScheme(.dark)
                 .task {
                     subscription.configure(auth: auth)
