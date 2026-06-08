@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* UndergroundFM web — dark underground aesthetic. Yellow #FFE000 + black #0A0A0A. */
+
+@layer base {
+  :root {
+    /* Map shadcn tokens onto the underground palette (dark by default). */
+    --background: 0 0% 4%;
+    --foreground: 0 0% 98%;
+
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 98%;
+
+    /* Electric yellow #FFE000 */
+    --primary: 55 100% 50%;
+    --primary-foreground: 0 0% 4%;
+
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 60%;
+
+    --accent: 55 100% 50%;
+    --accent-foreground: 0 0% 4%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 16%;
+    --input: 0 0% 16%;
+    --ring: 55 100% 50%;
+
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 60% at 50% -10%, hsl(55 100% 50% / 0.08), transparent 60%),
+      radial-gradient(ellipse 60% 50% at 100% 0%, hsl(55 100% 50% / 0.04), transparent 55%);
+    background-attachment: fixed;
+  }
+
+  /* Custom range input styling for sliders */
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 999px;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    margin-top: -5px;
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    background: hsl(55 100% 50%);
+    box-shadow: 0 0 8px hsl(55 100% 50% / 0.6);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border: none;
+    border-radius: 999px;
+    background: hsl(55 100% 50%);
+  }
+}
+
+@layer utilities {
+  .glow-yellow {
+    box-shadow: 0 0 24px hsl(55 100% 50% / 0.35);
+  }
+  .text-glow {
+    text-shadow: 0 0 18px hsl(55 100% 50% / 0.45);
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}

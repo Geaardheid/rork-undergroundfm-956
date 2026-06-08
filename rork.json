@@ -5,6 +5,11 @@
       "name": "UndergroundFM",
       "path": "ios",
       "framework": "swift"
+    },
+    {
+      "name": "Web",
+      "path": "web",
+      "framework": "web"
     }
   ]
 }

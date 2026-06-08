@@ -1,36 +1,35 @@
-# Duolingo-style daily streak celebration for UndergroundFM
+# Add a UndergroundFM web player (listen-only, shared Supabase backend)
 
-## What this adds
+A brand-new, separate web app that lets fans log in and listen to UndergroundFM. It reuses the same accounts, artists, and tracks as the iOS app — nothing about the iOS app changes.
 
-A full-screen, on-brand (yellow #FFE000 / black #0A0A0A / fire) celebration that pops up the moment a fan finishes listening to a track all the way through and their daily streak goes up — just like Duolingo's streak screen.
+## Look & feel
 
-## Features
+- Dark underground aesthetic: deep black (#0A0A0A) background with bold electric yellow (#FFE000) accents, matching the iOS app.
+- Genre sections labelled with the same emojis (🔥 rap, ⚡ drill, 🌍 afro, 💎 trap, 🎵 R&B, 🏠 house).
+- A persistent player bar pinned to the bottom of every screen (Spotify-style) showing cover art, title, artist, and controls.
+- Smooth hover states on cards, subtle animations on the player bar, fully responsive for desktop and mobile browsers.
 
-- **Daily streak tracking** — when a track plays fully to the end (not on skip), the app tells the server "I listened today." If that bumps the streak to a new day, a celebration plays. It only counts once per finished track.
-- **Cinematic celebration overlay** — appears above everything (including the mini player):
-  - Background animates from black into a fiery yellow→orange→deep-black glow with subtle film grain.
-  - A glowing, pulsing flame burst in the center (drawn in code, no image files), with the UndergroundFM "U" logo popping/zooming in on top and yellow/orange sparkle particles flying out.
-  - The streak number shows the previous count first, then ~0.8s later flips with a pop to the new number (large, bold, white), with "dagen op een rij" underneath.
-  - A row of 7 day-circles (ma di wo do vr za zo) where the achieved days light up one after another with a checkmark.
-  - Haptics: a heavy thump on the burst, a medium tap on the number flip, and a light tick for each day that lights up.
-- **Buttons at the bottom**:
-  - A white **"DEEL MIJLPAAL"** button that opens the normal share sheet with text like "🔥 7 dagen op rij op UndergroundFM" plus the app link.
-  - A bordered, transparent **"DOORGAAN"** button that closes the celebration.
+## Screens
 
-## Design
+- [x] All screens built and validated (build passes, live preview up)
 
-- Deep-black base bleeding into a warm fire gradient (brand yellow into orange), matching the existing cinematic look used on onboarding/login.
-- Brand yellow accents, white bold streak number, rounded day-circles that fill with yellow + black checkmark as they complete.
-- Everything uses the existing design tokens (colors, spacing, radius, fonts) so it feels native to the app.
-- Staggered, filmic timing so elements arrive in sequence rather than all at once.
+1. **Login / Register** — email + password. Login for existing accounts; Register creates a fan (listener) account. Friendly error messages.
+2. **Home feed** — genre sections, each a horizontal row of track cards (cover art, title, artist name). If the logged-in fan has saved favourite genres, only those sections show; otherwise all genres show.
+3. **Artist page** (public) — banner image, avatar, name, bio, Instagram link, and a list of that artist's tracks. Reachable by tapping an artist name.
+4. **Player bar** (always visible at the bottom) — play/pause, seek bar with elapsed/total time, volume slider, and previous/next within the current list.
 
-## How it behaves
+## Listening & paywall
 
-- The celebration is driven by a new streak helper kept at the app root, so it can show over any screen.
-- It listens for the "track finished" moment in the existing audio engine and asks the server to register today's listen.
-- The server side (the `register_daily_listen` function and streak columns) will be created by you in Supabase — the app only calls it and reads back `current_streak`, `longest_streak`, and whether the streak incremented today. The week-progress row is computed locally for now (all days up to today filled), ready to be swapped for real data later.
+- Browsing the whole catalogue is free — anyone logged in can scroll feeds and artist pages.
+- Pressing play checks the account's subscription status. If it's not active, a simple paywall screen appears explaining a subscription is needed, with a single button linking to [https://undergroundfm.nl](https://undergroundfm.nl). No payments are handled in the web app.
+- If active, the track streams from its existing audio URL and plays in the bottom bar.
+
+## What it will NOT include
+
+No uploading, no video/clips, no invite codes, no payout dashboard, no notifications, no settings, no admin. Strictly a listening MVP.
 
 ## Notes
 
-- The fire burst is built entirely in code (no Lottie, no image assets) so it stays portable to Android later. The "U" that zooms in reuses the existing LogoU logo asset.
-- No changes to playback, auth, payments, or existing features — this only adds the streak layer and its celebration screen.
+- This is a standalone web app in its own folder; the Swift app and database are untouched.
+- It connects to the existing Supabase project using the same public credentials the iOS app already uses.
+
