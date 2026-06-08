@@ -8,6 +8,7 @@ export interface Track {
   title: string;
   description: string | null;
   audio_url: string | null;
+  video_url: string | null;
   thumbnail_url: string | null;
   duration: number | null;
   stream_count: number;

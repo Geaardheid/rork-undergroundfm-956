@@ -10,6 +10,8 @@ import {
 import { supabase } from "@/lib/supabase";
 import type { Track } from "@/lib/types";
 
+export type MediaMode = "audio" | "video";
+
 interface PlayerContextValue {
   current: Track | null;
   queue: Track[];
@@ -18,6 +20,8 @@ interface PlayerContextValue {
   duration: number;
   volume: number;
   isFullscreen: boolean;
+  mediaMode: MediaMode;
+  hasVideo: boolean;
   openFullscreen: () => void;
   closeFullscreen: () => void;
   playTrack: (track: Track, queue?: Track[]) => void;
@@ -26,6 +30,8 @@ interface PlayerContextValue {
   prev: () => void;
   seek: (seconds: number) => void;
   setVolume: (v: number) => void;
+  setVideoEl: (el: HTMLVideoElement | null) => void;
+  switchMedia: (mode: MediaMode) => void;
 }
 
 const PlayerContext = createContext<PlayerContextValue | undefined>(undefined);
@@ -35,6 +41,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   if (!audioRef.current && typeof Audio !== "undefined") {
     audioRef.current = new Audio();
   }
+  const videoElRef = useRef<HTMLVideoElement | null>(null);
+  const [videoEl, setVideoElState] = useState<HTMLVideoElement | null>(null);
 
   const [current, setCurrent] = useState<Track | null>(null);
   const [queue, setQueue] = useState<Track[]>([]);
@@ -43,10 +51,19 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const [duration, setDuration] = useState<number>(0);
   const [volume, setVolumeState] = useState<number>(1);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [mediaMode, setMediaMode] = useState<MediaMode>("audio");
+  const mediaModeRef = useRef<MediaMode>("audio");
+  mediaModeRef.current = mediaMode;
+  const pendingSeekRef = useRef<number | null>(null);
   const countedRef = useRef<string | null>(null);
 
+  const hasVideo = Boolean(current?.video_url);
+
+  const activeEl = useCallback((): HTMLMediaElement | null => {
+    return mediaModeRef.current === "video" ? videoElRef.current : audioRef.current;
+  }, []);
+
   const openFullscreen = useCallback(() => setIsFullscreen(true), []);
-  const closeFullscreen = useCallback(() => setIsFullscreen(false), []);
 
   const next = useCallback(() => {
     setQueue((q) => {
@@ -70,14 +87,25 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  // Attach listeners to the audio element (active when mediaMode === "audio").
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    const onTime = () => setCurrentTime(audio.currentTime);
-    const onDuration = () => setDuration(audio.duration || 0);
-    const onEnded = () => next();
-    const onPlay = () => setIsPlaying(true);
-    const onPause = () => setIsPlaying(false);
+    const onTime = () => {
+      if (mediaModeRef.current === "audio") setCurrentTime(audio.currentTime);
+    };
+    const onDuration = () => {
+      if (mediaModeRef.current === "audio") setDuration(audio.duration || 0);
+    };
+    const onEnded = () => {
+      if (mediaModeRef.current === "audio") next();
+    };
+    const onPlay = () => {
+      if (mediaModeRef.current === "audio") setIsPlaying(true);
+    };
+    const onPause = () => {
+      if (mediaModeRef.current === "audio") setIsPlaying(false);
+    };
     audio.addEventListener("timeupdate", onTime);
     audio.addEventListener("loadedmetadata", onDuration);
     audio.addEventListener("ended", onEnded);
@@ -92,10 +120,55 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     };
   }, [next]);
 
-  // Load + play whenever the current track changes.
+  // Attach listeners to the video element whenever it mounts (active when mediaMode === "video").
+  useEffect(() => {
+    if (!videoEl) return;
+    const onTime = () => {
+      if (mediaModeRef.current === "video") setCurrentTime(videoEl.currentTime);
+    };
+    const onMeta = () => {
+      if (mediaModeRef.current !== "video") return;
+      setDuration(videoEl.duration || 0);
+      if (pendingSeekRef.current != null) {
+        try {
+          videoEl.currentTime = pendingSeekRef.current;
+        } catch {
+          /* ignore */
+        }
+        pendingSeekRef.current = null;
+      }
+    };
+    const onEnded = () => {
+      if (mediaModeRef.current === "video") next();
+    };
+    const onPlay = () => {
+      if (mediaModeRef.current === "video") setIsPlaying(true);
+    };
+    const onPause = () => {
+      if (mediaModeRef.current === "video") setIsPlaying(false);
+    };
+    videoEl.addEventListener("timeupdate", onTime);
+    videoEl.addEventListener("loadedmetadata", onMeta);
+    videoEl.addEventListener("ended", onEnded);
+    videoEl.addEventListener("play", onPlay);
+    videoEl.addEventListener("pause", onPause);
+    return () => {
+      videoEl.removeEventListener("timeupdate", onTime);
+      videoEl.removeEventListener("loadedmetadata", onMeta);
+      videoEl.removeEventListener("ended", onEnded);
+      videoEl.removeEventListener("play", onPlay);
+      videoEl.removeEventListener("pause", onPause);
+    };
+  }, [videoEl, next]);
+
+  // Load + play audio whenever the current track changes; always reset to audio mode.
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !current?.audio_url) return;
+    mediaModeRef.current = "audio";
+    setMediaMode("audio");
+    pendingSeekRef.current = null;
+    if (videoElRef.current) videoElRef.current.pause();
     audio.src = current.audio_url;
     audio.volume = volume;
     setCurrentTime(0);
@@ -114,6 +187,46 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     }
   }, [current, currentTime]);
 
+  const switchMedia = useCallback(
+    (mode: MediaMode) => {
+      const from = mediaModeRef.current;
+      if (from === mode) return;
+      const fromEl = from === "video" ? videoElRef.current : audioRef.current;
+      const toEl = mode === "video" ? videoElRef.current : audioRef.current;
+      const t = fromEl?.currentTime ?? currentTime;
+      const wasPlaying = fromEl ? !fromEl.paused : isPlaying;
+      if (fromEl) fromEl.pause();
+      mediaModeRef.current = mode;
+      setMediaMode(mode);
+      if (!toEl) return;
+      toEl.volume = volume;
+      setCurrentTime(t);
+      if (toEl.readyState >= 1) {
+        try {
+          toEl.currentTime = t;
+        } catch {
+          /* ignore */
+        }
+        if (toEl.duration) setDuration(toEl.duration);
+        pendingSeekRef.current = null;
+      } else {
+        pendingSeekRef.current = t;
+      }
+      if (wasPlaying) toEl.play().catch(() => undefined);
+    },
+    [currentTime, isPlaying, volume],
+  );
+
+  const closeFullscreen = useCallback(() => {
+    if (mediaModeRef.current === "video") switchMedia("audio");
+    setIsFullscreen(false);
+  }, [switchMedia]);
+
+  const setVideoEl = useCallback((el: HTMLVideoElement | null) => {
+    videoElRef.current = el;
+    setVideoElState(el);
+  }, []);
+
   const playTrack = useCallback((track: Track, newQueue?: Track[]) => {
     if (newQueue && newQueue.length > 0) setQueue(newQueue);
     else setQueue([track]);
@@ -122,22 +235,26 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const togglePlay = useCallback(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    if (audio.paused) audio.play().catch(() => undefined);
-    else audio.pause();
-  }, []);
+    const el = activeEl();
+    if (!el) return;
+    if (el.paused) el.play().catch(() => undefined);
+    else el.pause();
+  }, [activeEl]);
 
-  const seek = useCallback((seconds: number) => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    audio.currentTime = seconds;
-    setCurrentTime(seconds);
-  }, []);
+  const seek = useCallback(
+    (seconds: number) => {
+      const el = activeEl();
+      if (!el) return;
+      el.currentTime = seconds;
+      setCurrentTime(seconds);
+    },
+    [activeEl],
+  );
 
   const setVolume = useCallback((v: number) => {
     setVolumeState(v);
     if (audioRef.current) audioRef.current.volume = v;
+    if (videoElRef.current) videoElRef.current.volume = v;
   }, []);
 
   return (
@@ -150,6 +267,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         duration,
         volume,
         isFullscreen,
+        mediaMode,
+        hasVideo,
         openFullscreen,
         closeFullscreen,
         playTrack,
@@ -158,6 +277,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         prev,
         seek,
         setVolume,
+        setVideoEl,
+        switchMedia,
       }}
     >
       {children}

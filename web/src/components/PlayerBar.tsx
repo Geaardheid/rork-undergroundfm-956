@@ -10,7 +10,6 @@ export function PlayerBar() {
     currentTime,
     duration,
     volume,
-    isFullscreen,
     openFullscreen,
     togglePlay,
     next,
@@ -20,7 +19,7 @@ export function PlayerBar() {
   } = usePlayer();
   const [lastVolume, setLastVolume] = useState<number>(1);
 
-  if (!current || isFullscreen) return null;
+  if (!current) return null;
 
   const toggleMute = () => {
     if (volume > 0) {
@@ -32,7 +31,7 @@ export function PlayerBar() {
   };
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 animate-slide-up border-t border-border bg-card/95 backdrop-blur-lg">
+    <div className="fixed inset-x-0 bottom-0 z-50 animate-slide-up border-t border-border bg-card/95 backdrop-blur-lg">
       <div className="mx-auto flex max-w-6xl items-center gap-3 px-3 py-2.5 sm:gap-4 sm:px-4">
         {/* Track info */}
         <button

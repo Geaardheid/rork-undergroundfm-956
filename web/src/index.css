@@ -37,6 +37,9 @@
     --ring: 55 100% 50%;
 
     --radius: 0.75rem;
+
+    /* Height of the persistent bottom playback bar. */
+    --player-bar-h: 80px;
   }
 }
 
