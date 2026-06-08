@@ -17,6 +17,9 @@ interface PlayerContextValue {
   currentTime: number;
   duration: number;
   volume: number;
+  isFullscreen: boolean;
+  openFullscreen: () => void;
+  closeFullscreen: () => void;
   playTrack: (track: Track, queue?: Track[]) => void;
   togglePlay: () => void;
   next: () => void;
@@ -39,7 +42,11 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [duration, setDuration] = useState<number>(0);
   const [volume, setVolumeState] = useState<number>(1);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const countedRef = useRef<string | null>(null);
+
+  const openFullscreen = useCallback(() => setIsFullscreen(true), []);
+  const closeFullscreen = useCallback(() => setIsFullscreen(false), []);
 
   const next = useCallback(() => {
     setQueue((q) => {
@@ -111,6 +118,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     if (newQueue && newQueue.length > 0) setQueue(newQueue);
     else setQueue([track]);
     setCurrent(track);
+    setIsFullscreen(true);
   }, []);
 
   const togglePlay = useCallback(() => {
@@ -141,6 +149,9 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         currentTime,
         duration,
         volume,
+        isFullscreen,
+        openFullscreen,
+        closeFullscreen,
         playTrack,
         togglePlay,
         next,

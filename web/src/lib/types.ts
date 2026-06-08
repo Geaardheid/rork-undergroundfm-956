@@ -32,6 +32,17 @@ export interface ArtistProfile {
   verified: boolean;
 }
 
+export interface Playlist {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string | null;
+  cover_url: string | null;
+  is_public: boolean;
+  track_count: number;
+  created_at: string | null;
+}
+
 export interface AppUser {
   id: string;
   email: string;

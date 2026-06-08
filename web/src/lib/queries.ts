@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import type { ArtistProfile, Track } from "@/lib/types";
+import type { ArtistProfile, Playlist, Track } from "@/lib/types";
 
 const TRACK_SELECT = "*,artists(artist_name)";
 
@@ -45,6 +45,88 @@ export async function fetchArtistTracks(artistId: string): Promise<Track[]> {
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   return (data ?? []) as Track[];
+}
+
+export async function fetchUserPlaylists(userId: string): Promise<Playlist[]> {
+  const { data, error } = await supabase
+    .from("playlists")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as Playlist[];
+}
+
+export async function fetchFollowedArtists(userId: string): Promise<ArtistProfile[]> {
+  const { data, error } = await supabase
+    .from("follows")
+    .select("artists(*)")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as unknown as { artists: ArtistProfile | null }[])
+    .map((row) => row.artists)
+    .filter((a): a is ArtistProfile => a != null);
+}
+
+export async function fetchLikedTracks(userId: string): Promise<Track[]> {
+  const { data, error } = await supabase
+    .from("likes")
+    .select(`tracks(${TRACK_SELECT})`)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as unknown as { tracks: Track | null }[])
+    .map((row) => row.tracks)
+    .filter((t): t is Track => t != null);
+}
+
+export async function fetchPlaylist(playlistId: string): Promise<Playlist | null> {
+  const { data, error } = await supabase
+    .from("playlists")
+    .select("*")
+    .eq("id", playlistId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data as Playlist | null;
+}
+
+export async function fetchPlaylistTracks(playlistId: string): Promise<Track[]> {
+  const { data, error } = await supabase
+    .from("playlist_tracks")
+    .select(`position, tracks(${TRACK_SELECT})`)
+    .eq("playlist_id", playlistId)
+    .order("position", { ascending: true });
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as unknown as { tracks: Track | null }[])
+    .map((row) => row.tracks)
+    .filter((t): t is Track => t != null);
+}
+
+export interface SearchResults {
+  tracks: Track[];
+  artists: ArtistProfile[];
+}
+
+export async function searchContent(term: string): Promise<SearchResults> {
+  const q = term.trim();
+  if (q.length < 2) return { tracks: [], artists: [] };
+  const pattern = `%${q}%`;
+  const [tracksRes, artistsRes] = await Promise.all([
+    supabase
+      .from("tracks")
+      .select(TRACK_SELECT)
+      .eq("status", "live")
+      .ilike("title", pattern)
+      .limit(6),
+    supabase.from("artists").select("*").ilike("artist_name", pattern).limit(6),
+  ]);
+  if (tracksRes.error) throw new Error(tracksRes.error.message);
+  if (artistsRes.error) throw new Error(artistsRes.error.message);
+  return {
+    tracks: (tracksRes.data ?? []) as Track[],
+    artists: (artistsRes.data ?? []) as ArtistProfile[],
+  };
 }
 
 export function normalizeInstagram(raw: string | null): string | null {

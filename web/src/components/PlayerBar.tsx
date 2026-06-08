@@ -1,16 +1,26 @@
-import { useNavigate } from "react-router-dom";
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Music } from "lucide-react";
+import { ChevronUp, Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Music } from "lucide-react";
 import { useState } from "react";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { formatTime } from "@/lib/queries";
 
 export function PlayerBar() {
-  const navigate = useNavigate();
-  const { current, isPlaying, currentTime, duration, volume, togglePlay, next, prev, seek, setVolume } =
-    usePlayer();
+  const {
+    current,
+    isPlaying,
+    currentTime,
+    duration,
+    volume,
+    isFullscreen,
+    openFullscreen,
+    togglePlay,
+    next,
+    prev,
+    seek,
+    setVolume,
+  } = usePlayer();
   const [lastVolume, setLastVolume] = useState<number>(1);
 
-  if (!current) return null;
+  if (!current || isFullscreen) return null;
 
   const toggleMute = () => {
     if (volume > 0) {
@@ -27,10 +37,11 @@ export function PlayerBar() {
         {/* Track info */}
         <button
           type="button"
-          onClick={() => navigate(`/artist/${current.artist_id}`)}
-          className="flex min-w-0 flex-1 items-center gap-3 text-left sm:flex-none sm:w-56"
+          onClick={openFullscreen}
+          aria-label="Open speler"
+          className="group flex min-w-0 flex-1 items-center gap-3 text-left sm:flex-none sm:w-56"
         >
-          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md bg-secondary">
+          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md bg-secondary">
             {current.thumbnail_url ? (
               <img src={current.thumbnail_url} alt="" className="h-full w-full object-cover" />
             ) : (
@@ -38,6 +49,9 @@ export function PlayerBar() {
                 <Music className="h-5 w-5" />
               </div>
             )}
+            <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+              <ChevronUp className="h-5 w-5 text-white" />
+            </div>
           </div>
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-foreground">{current.title}</p>
