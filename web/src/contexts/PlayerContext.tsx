@@ -218,9 +218,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   );
 
   const closeFullscreen = useCallback(() => {
-    if (mediaModeRef.current === "video") switchMedia("audio");
+    // Closing only hides the UI. The active source (audio or video) keeps
+    // playing at the same position; reopening reflects whatever is active.
     setIsFullscreen(false);
-  }, [switchMedia]);
+  }, []);
 
   const setVideoEl = useCallback((el: HTMLVideoElement | null) => {
     videoElRef.current = el;

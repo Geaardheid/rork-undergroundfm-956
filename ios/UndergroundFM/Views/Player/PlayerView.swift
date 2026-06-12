@@ -47,6 +47,11 @@ struct PlayerView: View {
             }
         }
         .task(id: player.currentTrack?.id) { await loadLikeState() }
+        .onAppear {
+            // Reopening must reflect the source that is actually playing,
+            // so the 🎬 tab shows immediately when video is active.
+            selectedTab = player.activeSource == .video ? .clip : .audio
+        }
         .onChange(of: player.currentTrack?.id) { _, _ in
             // Every new track opens on the audio source by default.
             selectedTab = .audio
