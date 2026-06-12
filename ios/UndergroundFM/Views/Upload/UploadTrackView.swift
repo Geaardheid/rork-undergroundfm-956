@@ -26,6 +26,10 @@ struct UploadTrackView: View {
     @State private var coverItem: PhotosPickerItem?
     @State private var coverImageData: Data?
 
+    // Bestandsgrootte-validatie
+    @State private var audioTooLarge: Bool = false
+    @State private var coverTooLarge: Bool = false
+
     // Video picker (optioneel)
     @State private var videoData: Data?
 
@@ -57,6 +61,8 @@ struct UploadTrackView: View {
     private var canUpload: Bool {
         audioURL != nil &&
         coverImageData != nil &&
+        !audioTooLarge &&
+        !coverTooLarge &&
         !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
         !isUploading
     }
@@ -106,7 +112,14 @@ struct UploadTrackView: View {
             .onChange(of: coverItem) { _, newItem in
                 Task {
                     if let data = try? await newItem?.loadTransferable(type: Data.self) {
-                        coverImageData = data
+                        if data.count > UploadLimits.maxCoverBytes {
+                            coverTooLarge = true
+                            coverImageData = nil
+                            HapticManager.error()
+                        } else {
+                            coverTooLarge = false
+                            coverImageData = data
+                        }
                     }
                 }
             }
@@ -176,7 +189,11 @@ struct UploadTrackView: View {
             }
             .buttonStyle(PressableScaleStyle())
 
-            if let msg = audioQualityMessage {
+            if audioTooLarge {
+                Text(l10n.t("upload.audioTooLarge"))
+                    .font(.system(size: AppFontSize.xs, weight: .bold))
+                    .foregroundStyle(AppColors.error)
+            } else if let msg = audioQualityMessage {
                 Text(msg)
                     .font(.system(size: AppFontSize.xs, weight: .bold))
                     .foregroundStyle(audioQualityColor)
@@ -211,9 +228,9 @@ struct UploadTrackView: View {
                         Text(coverImageData != nil ? l10n.t("upload.coverSelected") : l10n.t("upload.coverPlaceholder"))
                             .font(.system(size: AppFontSize.md, weight: .semibold))
                             .foregroundStyle(coverImageData != nil ? AppColors.textPrimary : AppColors.textMuted)
-                        Text("16:9")
+                        Text(coverTooLarge ? l10n.t("upload.coverTooLarge") : "16:9")
                             .font(.system(size: AppFontSize.xs, weight: .medium))
-                            .foregroundStyle(AppColors.textMuted)
+                            .foregroundStyle(coverTooLarge ? AppColors.error : AppColors.textMuted)
                     }
                     Spacer()
                     Image(systemName: coverImageData != nil ? "checkmark.circle.fill" : "plus")

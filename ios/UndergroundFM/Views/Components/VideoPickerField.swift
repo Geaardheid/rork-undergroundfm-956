@@ -2,7 +2,8 @@
 //  VideoPickerField.swift
 //  UndergroundFM
 //
-//  Herbruikbare videoclip-picker (mp4/mov, max 50MB) voor upload + edit.
+//  Herbruikbare videoclip-picker (mp4/mov) voor upload + edit.
+//  Bestandsgrootte-limiet: zie UploadLimits.maxVideoBytes.
 //
 
 import SwiftUI
@@ -18,7 +19,7 @@ struct VideoPickerField: View {
     @State private var tooLarge: Bool = false
     @State private var isLoading: Bool = false
 
-    private let maxBytes = 50 * 1024 * 1024
+    private let maxBytes = UploadLimits.maxVideoBytes
 
     private var hasSelection: Bool { videoData != nil }
 
