@@ -109,7 +109,7 @@ export function PlayerOverlay() {
 
         {/* Content */}
         <div className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto px-6 py-4">
-          <div className={cn("flex w-full flex-col items-center", isVideo ? "max-w-2xl" : "max-w-md")}>
+          <div className={cn("flex w-full flex-col items-center", isVideo ? "max-w-5xl" : "max-w-md")}>
             {/* Media area: cover (audio) or video. Video stays mounted to keep position when switching. */}
             <div
               className={cn(
@@ -134,7 +134,7 @@ export function PlayerOverlay() {
               <div
                 ref={setVideoSlot}
                 className={cn(
-                  "aspect-video w-full overflow-hidden rounded-2xl bg-black shadow-2xl",
+                  "mx-auto aspect-video w-full max-w-[min(100%,calc(68vh*16/9))] overflow-hidden rounded-2xl bg-black shadow-2xl",
                   isVideo ? "block" : "hidden",
                 )}
               />
