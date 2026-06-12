@@ -30,19 +30,36 @@ interface PlayerContextValue {
   prev: () => void;
   seek: (seconds: number) => void;
   setVolume: (v: number) => void;
-  setVideoEl: (el: HTMLVideoElement | null) => void;
+  setVideoSlot: (el: HTMLDivElement | null) => void;
   switchMedia: (mode: MediaMode) => void;
 }
 
 const PlayerContext = createContext<PlayerContextValue | undefined>(undefined);
 
+const VIDEO_VISIBLE_CLASS = "h-full w-full bg-black object-contain";
+const VIDEO_HIDDEN_CLASS = "pointer-events-none absolute h-px w-px opacity-0";
+
 export function PlayerProvider({ children }: { children: ReactNode }) {
+  // Persistent audio element — never unmounts.
   const audioRef = useRef<HTMLAudioElement | null>(null);
   if (!audioRef.current && typeof Audio !== "undefined") {
     audioRef.current = new Audio();
   }
-  const videoElRef = useRef<HTMLVideoElement | null>(null);
-  const [videoEl, setVideoElState] = useState<HTMLVideoElement | null>(null);
+
+  // Persistent video element — created once, never lives in the overlay DOM.
+  // It is parked in an offscreen host and only visually relocated into the
+  // overlay's slot while the video tab is open.
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  if (!videoRef.current && typeof document !== "undefined") {
+    const v = document.createElement("video");
+    v.playsInline = true;
+    v.setAttribute("playsinline", "");
+    v.preload = "auto";
+    v.className = VIDEO_HIDDEN_CLASS;
+    videoRef.current = v;
+  }
+  const videoHostRef = useRef<HTMLDivElement | null>(null);
+  const [videoSlot, setVideoSlotState] = useState<HTMLDivElement | null>(null);
 
   const [current, setCurrent] = useState<Track | null>(null);
   const [queue, setQueue] = useState<Track[]>([]);
@@ -59,8 +76,9 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
   const hasVideo = Boolean(current?.video_url);
 
+  // Single source of truth for the currently-active media element.
   const activeEl = useCallback((): HTMLMediaElement | null => {
-    return mediaModeRef.current === "video" ? videoElRef.current : audioRef.current;
+    return mediaModeRef.current === "video" ? videoRef.current : audioRef.current;
   }, []);
 
   const openFullscreen = useCallback(() => setIsFullscreen(true), []);
@@ -87,7 +105,31 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  // Attach listeners to the audio element (active when mediaMode === "audio").
+  // Park the persistent video element in its offscreen host on mount.
+  useEffect(() => {
+    const host = videoHostRef.current;
+    const v = videoRef.current;
+    if (host && v && v.parentElement !== host) host.appendChild(v);
+  }, []);
+
+  // Relocate the (already-playing) video element into the overlay slot when the
+  // video tab is open, otherwise park it back in the offscreen host. Moving the
+  // node never restarts playback.
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    const showInSlot = isFullscreen && mediaMode === "video" && videoSlot;
+    if (showInSlot) {
+      if (v.parentElement !== videoSlot) videoSlot.appendChild(v);
+      v.className = VIDEO_VISIBLE_CLASS;
+    } else {
+      const host = videoHostRef.current;
+      if (host && v.parentElement !== host) host.appendChild(v);
+      v.className = VIDEO_HIDDEN_CLASS;
+    }
+  }, [isFullscreen, mediaMode, videoSlot]);
+
+  // Listeners on the audio element — only drive shared state while audio is active.
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -120,18 +162,20 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     };
   }, [next]);
 
-  // Attach listeners to the video element whenever it mounts (active when mediaMode === "video").
+  // Listeners on the persistent video element — only drive shared state while
+  // video is active. Attached once since the element never remounts.
   useEffect(() => {
-    if (!videoEl) return;
+    const video = videoRef.current;
+    if (!video) return;
     const onTime = () => {
-      if (mediaModeRef.current === "video") setCurrentTime(videoEl.currentTime);
+      if (mediaModeRef.current === "video") setCurrentTime(video.currentTime);
     };
     const onMeta = () => {
       if (mediaModeRef.current !== "video") return;
-      setDuration(videoEl.duration || 0);
+      setDuration(video.duration || 0);
       if (pendingSeekRef.current != null) {
         try {
-          videoEl.currentTime = pendingSeekRef.current;
+          video.currentTime = pendingSeekRef.current;
         } catch {
           /* ignore */
         }
@@ -147,28 +191,42 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     const onPause = () => {
       if (mediaModeRef.current === "video") setIsPlaying(false);
     };
-    videoEl.addEventListener("timeupdate", onTime);
-    videoEl.addEventListener("loadedmetadata", onMeta);
-    videoEl.addEventListener("ended", onEnded);
-    videoEl.addEventListener("play", onPlay);
-    videoEl.addEventListener("pause", onPause);
+    video.addEventListener("timeupdate", onTime);
+    video.addEventListener("loadedmetadata", onMeta);
+    video.addEventListener("ended", onEnded);
+    video.addEventListener("play", onPlay);
+    video.addEventListener("pause", onPause);
     return () => {
-      videoEl.removeEventListener("timeupdate", onTime);
-      videoEl.removeEventListener("loadedmetadata", onMeta);
-      videoEl.removeEventListener("ended", onEnded);
-      videoEl.removeEventListener("play", onPlay);
-      videoEl.removeEventListener("pause", onPause);
+      video.removeEventListener("timeupdate", onTime);
+      video.removeEventListener("loadedmetadata", onMeta);
+      video.removeEventListener("ended", onEnded);
+      video.removeEventListener("play", onPlay);
+      video.removeEventListener("pause", onPause);
     };
-  }, [videoEl, next]);
+  }, [next]);
 
-  // Load + play audio whenever the current track changes; always reset to audio mode.
+  // Load + play audio whenever the current track changes; always reset to audio
+  // mode and prime/clear the video source. Only one element ever plays.
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !current?.audio_url) return;
     mediaModeRef.current = "audio";
     setMediaMode("audio");
     pendingSeekRef.current = null;
-    if (videoElRef.current) videoElRef.current.pause();
+
+    const video = videoRef.current;
+    if (video) {
+      video.pause();
+      if (current.video_url) {
+        if (video.src !== current.video_url) video.src = current.video_url;
+        if (current.thumbnail_url) video.poster = current.thumbnail_url;
+      } else {
+        video.removeAttribute("src");
+        video.load();
+      }
+      video.volume = volume;
+    }
+
     audio.src = current.audio_url;
     audio.volume = volume;
     setCurrentTime(0);
@@ -191,10 +249,11 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     (mode: MediaMode) => {
       const from = mediaModeRef.current;
       if (from === mode) return;
-      const fromEl = from === "video" ? videoElRef.current : audioRef.current;
-      const toEl = mode === "video" ? videoElRef.current : audioRef.current;
+      const fromEl = from === "video" ? videoRef.current : audioRef.current;
+      const toEl = mode === "video" ? videoRef.current : audioRef.current;
       const t = fromEl?.currentTime ?? currentTime;
       const wasPlaying = fromEl ? !fromEl.paused : isPlaying;
+      // Pause the outgoing element so only one source ever plays.
       if (fromEl) fromEl.pause();
       mediaModeRef.current = mode;
       setMediaMode(mode);
@@ -219,13 +278,12 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
   const closeFullscreen = useCallback(() => {
     // Closing only hides the UI. The active source (audio or video) keeps
-    // playing at the same position; reopening reflects whatever is active.
+    // playing at the same position; the persistent elements are untouched.
     setIsFullscreen(false);
   }, []);
 
-  const setVideoEl = useCallback((el: HTMLVideoElement | null) => {
-    videoElRef.current = el;
-    setVideoElState(el);
+  const setVideoSlot = useCallback((el: HTMLDivElement | null) => {
+    setVideoSlotState(el);
   }, []);
 
   const playTrack = useCallback((track: Track, newQueue?: Track[]) => {
@@ -255,7 +313,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const setVolume = useCallback((v: number) => {
     setVolumeState(v);
     if (audioRef.current) audioRef.current.volume = v;
-    if (videoElRef.current) videoElRef.current.volume = v;
+    if (videoRef.current) videoRef.current.volume = v;
   }, []);
 
   return (
@@ -278,11 +336,17 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         prev,
         seek,
         setVolume,
-        setVideoEl,
+        setVideoSlot,
         switchMedia,
       }}
     >
       {children}
+      {/* Offscreen host that keeps the video element alive across overlay open/close. */}
+      <div
+        ref={videoHostRef}
+        aria-hidden
+        className="pointer-events-none fixed left-0 top-0 h-px w-px overflow-hidden opacity-0"
+      />
     </PlayerContext.Provider>
   );
 }

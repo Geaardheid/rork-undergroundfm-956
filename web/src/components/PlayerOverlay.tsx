@@ -30,7 +30,7 @@ export function PlayerOverlay() {
     prev,
     seek,
     setVolume,
-    setVideoEl,
+    setVideoSlot,
     switchMedia,
   } = usePlayer();
 
@@ -131,11 +131,8 @@ export function PlayerOverlay() {
             </div>
 
             {hasVideo && (
-              <video
-                ref={setVideoEl}
-                src={current.video_url ?? undefined}
-                poster={current.thumbnail_url ?? undefined}
-                playsInline
+              <div
+                ref={setVideoSlot}
                 className={cn(
                   "aspect-video w-full overflow-hidden rounded-2xl bg-black shadow-2xl",
                   isVideo ? "block" : "hidden",
